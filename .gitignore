@@ -1,7 +1,13 @@
 # compiled output
+
 /dist
 /node_modules
 /build
+
+# AI / Agent tools
+/.agents
+/.claude
+/.windsurf
 
 # TypeScript build cache
 *.tsbuildinfo
@@ -57,3 +63,5 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+/generated/prisma
