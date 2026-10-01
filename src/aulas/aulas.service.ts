@@ -1,13 +1,13 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 
+import { EstadoAula } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-
 import { CreateAulaDto } from './dto/create-aula.dto.js';
 import { UpdateAulaDto } from './dto/update-aula.dto.js';
-import { EstadoAula } from '../generated/prisma/enums.js';
 
 @Injectable()
 export class AulasService {
@@ -29,9 +29,7 @@ export class AulasService {
     });
 
     if (!aula) {
-      throw new NotFoundException(
-        'Aula no encontrada',
-      );
+      throw new NotFoundException('Aula no encontrada');
     }
 
     return aula;
@@ -68,6 +66,18 @@ export class AulasService {
 
   async remove(id: number) {
     await this.findOne(id);
+
+    const grupos = await this.prisma.grupo.count({
+      where: {
+        id_aula: id,
+      },
+    });
+
+    if (grupos > 0) {
+      throw new BadRequestException(
+        'No se puede eliminar un aula que está asociada a uno o más grupos',
+      );
+    }
 
     await this.prisma.aula.delete({
       where: {

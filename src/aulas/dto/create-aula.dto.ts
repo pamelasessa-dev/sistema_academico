@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
@@ -8,9 +9,6 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
-import { Transform } from 'class-transformer';
-
 import {
   ApiProperty,
   ApiPropertyOptional,

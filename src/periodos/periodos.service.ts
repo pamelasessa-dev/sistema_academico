@@ -1,13 +1,11 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { PrismaService } from '../prisma/prisma.service.js';
-
 import { EstadoPeriodo } from '../generated/prisma/enums.js';
-
 import { CreatePeriodoDto } from './dto/create-periodo.dto.js';
 import { UpdatePeriodoDto } from './dto/update-periodo.dto.js';
 
@@ -53,7 +51,8 @@ export class PeriodosService {
         fecha_inicio: fechaInicio,
         fecha_fin: fechaFin,
         limite_creditos: dto.limite_creditos,
-        estado: dto.estado ?? EstadoPeriodo.PLANIFICADO,
+        estado:
+          dto.estado ?? EstadoPeriodo.PLANIFICADO,
       },
     });
   }
@@ -75,26 +74,65 @@ export class PeriodosService {
       );
     }
 
+    if (
+      dto.estado === EstadoPeriodo.ACTIVO &&
+      periodoActual.estado !== EstadoPeriodo.ACTIVO
+    ) {
+      const periodoActivo =
+        await this.prisma.periodo.findFirst({
+          where: {
+            estado: EstadoPeriodo.ACTIVO,
+            id_periodo: {
+              not: id,
+            },
+          },
+        });
+
+      if (periodoActivo) {
+        throw new ConflictException(
+          'Ya existe otro período activo',
+        );
+      }
+    }
+
     return this.prisma.periodo.update({
       where: {
         id_periodo: id,
       },
       data: {
-        nombre: dto.nombre,
-        fecha_inicio: dto.fecha_inicio
-          ? new Date(dto.fecha_inicio)
-          : undefined,
-        fecha_fin: dto.fecha_fin
-          ? new Date(dto.fecha_fin)
-          : undefined,
-        limite_creditos: dto.limite_creditos,
-        estado: dto.estado,
+        ...(dto.nombre !== undefined && {
+          nombre: dto.nombre,
+        }),
+        ...(dto.fecha_inicio !== undefined && {
+          fecha_inicio: fechaInicio,
+        }),
+        ...(dto.fecha_fin !== undefined && {
+          fecha_fin: fechaFin,
+        }),
+        ...(dto.limite_creditos !== undefined && {
+          limite_creditos: dto.limite_creditos,
+        }),
+        ...(dto.estado !== undefined && {
+          estado: dto.estado,
+        }),
       },
     });
   }
 
   async remove(id: number) {
     await this.findOne(id);
+
+    const grupos = await this.prisma.grupo.count({
+      where: {
+        id_periodo: id,
+      },
+    });
+
+    if (grupos > 0) {
+      throw new ConflictException(
+        'No se puede eliminar el período porque tiene grupos asociados',
+      );
+    }
 
     await this.prisma.periodo.delete({
       where: {

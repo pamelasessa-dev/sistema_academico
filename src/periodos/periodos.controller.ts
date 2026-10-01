@@ -13,25 +13,35 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolUsuario } from '../generated/prisma/enums.js';
-
 import { CreatePeriodoDto } from './dto/create-periodo.dto.js';
 import { UpdatePeriodoDto } from './dto/update-periodo.dto.js';
 import { PeriodosService } from './periodos.service.js';
 
+@ApiTags('Períodos')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('periodos')
 export class PeriodosController {
-  constructor(private readonly periodosService: PeriodosService) {}
+  constructor(
+    private readonly periodosService: PeriodosService,
+  ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todos los períodos' })
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+    RolUsuario.PROFESOR,
+    RolUsuario.ESTUDIANTE,
+  )
+  @ApiOperation({
+    summary: 'Obtener todos los períodos',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de períodos obtenida correctamente',
@@ -41,7 +51,15 @@ export class PeriodosController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener un período por ID' })
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+    RolUsuario.PROFESOR,
+    RolUsuario.ESTUDIANTE,
+  )
+  @ApiOperation({
+    summary: 'Obtener un período por ID',
+  })
   @ApiResponse({
     status: 200,
     description: 'Período encontrado',
@@ -56,7 +74,9 @@ export class PeriodosController {
 
   @Post()
   @Roles(RolUsuario.ADMIN)
-  @ApiOperation({ summary: 'Crear un período' })
+  @ApiOperation({
+    summary: 'Crear un período',
+  })
   @ApiResponse({
     status: 201,
     description: 'Período creado correctamente',
@@ -71,7 +91,9 @@ export class PeriodosController {
 
   @Patch(':id')
   @Roles(RolUsuario.ADMIN)
-  @ApiOperation({ summary: 'Actualizar un período' })
+  @ApiOperation({
+    summary: 'Actualizar un período',
+  })
   @ApiResponse({
     status: 200,
     description: 'Período actualizado correctamente',
@@ -93,7 +115,9 @@ export class PeriodosController {
 
   @Delete(':id')
   @Roles(RolUsuario.ADMIN)
-  @ApiOperation({ summary: 'Eliminar un período' })
+  @ApiOperation({
+    summary: 'Eliminar un período',
+  })
   @ApiResponse({
     status: 200,
     description: 'Período eliminado correctamente',

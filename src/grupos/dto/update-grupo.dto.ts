@@ -10,7 +10,6 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-
 import { EstadoGrupo } from '../../generated/prisma/enums.js';
 
 export class UpdateGrupoDto {
@@ -87,7 +86,8 @@ export class UpdateGrupoDto {
   nombre?: string;
 
   @ApiPropertyOptional({
-    description: 'Cantidad máxima de estudiantes que puede tener el grupo.',
+    description:
+      'Cantidad máxima de estudiantes que puede tener el grupo.',
     example: 30,
   })
   @IsOptional()

@@ -3,9 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { PrismaService } from '../prisma/prisma.service.js';
-
 import { CreateHorarioDto } from './dto/create-horario.dto.js';
 import { UpdateHorarioDto } from './dto/update-horario.dto.js';
 
@@ -15,9 +13,35 @@ export class HorariosService {
 
   async findAll() {
     return this.prisma.horario.findMany({
-      orderBy: {
-        id_horario: 'asc',
+      include: {
+        grupo: {
+          include: {
+            materia: true,
+            periodo: true,
+            profesor: {
+              include: {
+                usuario: {
+                  select: {
+                    id_usuario: true,
+                    primer_nombre: true,
+                    primer_apellido: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+            aula: true,
+          },
+        },
       },
+      orderBy: [
+        {
+          id_grupo: 'asc',
+        },
+        {
+          id_horario: 'asc',
+        },
+      ],
     });
   }
 
@@ -25,6 +49,27 @@ export class HorariosService {
     const horario = await this.prisma.horario.findUnique({
       where: {
         id_horario: id,
+      },
+      include: {
+        grupo: {
+          include: {
+            materia: true,
+            periodo: true,
+            profesor: {
+              include: {
+                usuario: {
+                  select: {
+                    id_usuario: true,
+                    primer_nombre: true,
+                    primer_apellido: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+            aula: true,
+          },
+        },
       },
     });
 
@@ -45,12 +90,45 @@ export class HorariosService {
   }
 
   async create(dto: CreateHorarioDto) {
+    const grupo = await this.prisma.grupo.findUnique({
+      where: {
+        id_grupo: dto.id_grupo,
+      },
+    });
+
+    if (!grupo) {
+      throw new NotFoundException('El grupo no existe');
+    }
+
     const horaInicio = this.convertirHora(dto.hora_inicio);
     const horaFin = this.convertirHora(dto.hora_fin);
 
     if (horaFin <= horaInicio) {
       throw new BadRequestException(
         'La hora de finalización debe ser posterior a la hora de inicio',
+      );
+    }
+
+    const horarioExistente = await this.prisma.horario.findFirst({
+      where: {
+        id_grupo: dto.id_grupo,
+        dia_semana: dto.dia_semana,
+        OR: [
+          {
+            hora_inicio: {
+              lt: horaFin,
+            },
+            hora_fin: {
+              gt: horaInicio,
+            },
+          },
+        ],
+      },
+    });
+
+    if (horarioExistente) {
+      throw new BadRequestException(
+        'El grupo ya tiene un horario que se superpone con el horario indicado',
       );
     }
 
@@ -75,9 +153,33 @@ export class HorariosService {
       ? this.convertirHora(dto.hora_fin)
       : horarioActual.hora_fin;
 
+    const diaSemana = dto.dia_semana ?? horarioActual.dia_semana;
+
     if (horaFin <= horaInicio) {
       throw new BadRequestException(
         'La hora de finalización debe ser posterior a la hora de inicio',
+      );
+    }
+
+    const horarioSuperpuesto = await this.prisma.horario.findFirst({
+      where: {
+        id_horario: {
+          not: id,
+        },
+        id_grupo: horarioActual.id_grupo,
+        dia_semana: diaSemana,
+        hora_inicio: {
+          lt: horaFin,
+        },
+        hora_fin: {
+          gt: horaInicio,
+        },
+      },
+    });
+
+    if (horarioSuperpuesto) {
+      throw new BadRequestException(
+        'El grupo ya tiene otro horario que se superpone con el horario indicado',
       );
     }
 
@@ -86,7 +188,6 @@ export class HorariosService {
         id_horario: id,
       },
       data: {
-        id_grupo: dto.id_grupo,
         dia_semana: dto.dia_semana,
         hora_inicio: dto.hora_inicio
           ? horaInicio

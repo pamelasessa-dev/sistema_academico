@@ -13,17 +13,17 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolUsuario } from '../generated/prisma/enums.js';
-
 import { CreateHorarioDto } from './dto/create-horario.dto.js';
 import { UpdateHorarioDto } from './dto/update-horario.dto.js';
 import { HorariosService } from './horarios.service.js';
 
+@ApiTags('Horarios')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('horarios')
@@ -31,6 +31,12 @@ export class HorariosController {
   constructor(private readonly horariosService: HorariosService) {}
 
   @Get()
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+    RolUsuario.PROFESOR,
+    RolUsuario.ESTUDIANTE,
+  )
   @ApiOperation({ summary: 'Obtener todos los horarios' })
   @ApiResponse({
     status: 200,
@@ -41,6 +47,12 @@ export class HorariosController {
   }
 
   @Get(':id')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+    RolUsuario.PROFESOR,
+    RolUsuario.ESTUDIANTE,
+  )
   @ApiOperation({ summary: 'Obtener un horario por ID' })
   @ApiResponse({
     status: 200,

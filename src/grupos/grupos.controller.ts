@@ -13,17 +13,17 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { RolUsuario } from '../generated/prisma/enums.js';
-
 import { CreateGrupoDto } from './dto/create-grupo.dto.js';
 import { UpdateGrupoDto } from './dto/update-grupo.dto.js';
 import { GruposService } from './grupos.service.js';
 
+@ApiTags('Grupos')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('grupos')
@@ -31,6 +31,12 @@ export class GruposController {
   constructor(private readonly gruposService: GruposService) {}
 
   @Get()
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+    RolUsuario.PROFESOR,
+    RolUsuario.ESTUDIANTE,
+  )
   @ApiOperation({ summary: 'Obtener todos los grupos' })
   @ApiResponse({
     status: 200,
@@ -41,6 +47,12 @@ export class GruposController {
   }
 
   @Get(':id')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+    RolUsuario.PROFESOR,
+    RolUsuario.ESTUDIANTE,
+  )
   @ApiOperation({ summary: 'Obtener un grupo por ID' })
   @ApiResponse({
     status: 200,
@@ -79,10 +91,6 @@ export class GruposController {
   @ApiResponse({
     status: 404,
     description: 'Grupo no encontrado',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'No se puede actualizar el grupo por una relación inexistente',
   })
   update(
     @Param('id', ParseIntPipe) id: number,

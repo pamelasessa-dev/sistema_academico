@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { PrismaModule } from '../prisma/prisma.module.js';
 import { ProfesoresService } from './profesores.service.js';
 import { ProfesoresController } from './profesores.controller.js';
-//conecta, dice este módulo tiene este controller y este service
-//s permite que Nest pueda hacer la inyección:
+
 @Module({
-  
+  imports: [PrismaModule],
   providers: [ProfesoresService],
-  controllers: [ProfesoresController]
+  controllers: [ProfesoresController],
+  exports: [ProfesoresService],
 })
 export class ProfesoresModule {}
