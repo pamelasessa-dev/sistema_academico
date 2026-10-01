@@ -8,7 +8,6 @@ import {
   Matches,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-
 import {
   ApiProperty,
   ApiPropertyOptional,
@@ -144,7 +143,8 @@ export class CreateProfesorDto {
   @IsDateString(
     {},
     {
-      message: 'La fecha de contratación debe ser una fecha válida',
+      message:
+        'La fecha de contratación debe ser una fecha válida',
     },
   )
   @IsNotEmpty({

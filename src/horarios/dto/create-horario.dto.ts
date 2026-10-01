@@ -7,7 +7,6 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
 import { DiaSemana } from '../../generated/prisma/enums.js';
 
 export class CreateHorarioDto {

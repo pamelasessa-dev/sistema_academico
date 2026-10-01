@@ -7,9 +7,7 @@ import {
   Matches,
   MinLength,
 } from 'class-validator';
-
 import { Transform } from 'class-transformer';
-
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateProfesorDto {
@@ -129,7 +127,8 @@ export class UpdateProfesorDto {
   @IsDateString(
     {},
     {
-      message: 'La fecha de contratación debe ser una fecha válida',
+      message:
+        'La fecha de contratación debe ser una fecha válida',
     },
   )
   fecha_contratacion?: string;

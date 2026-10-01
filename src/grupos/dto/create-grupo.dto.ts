@@ -9,7 +9,6 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-
 import { EstadoGrupo } from '../../generated/prisma/enums.js';
 
 export class CreateGrupoDto {
@@ -81,7 +80,8 @@ export class CreateGrupoDto {
   nombre: string;
 
   @ApiProperty({
-    description: 'Cantidad máxima de estudiantes que puede tener el grupo.',
+    description:
+      'Cantidad máxima de estudiantes que puede tener el grupo.',
     example: 30,
   })
   @IsInt({

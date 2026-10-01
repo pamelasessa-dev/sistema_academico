@@ -9,23 +9,21 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-
 import { RolUsuario } from '../generated/prisma/enums.js';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
-
 import { MateriasService } from './materias.service.js';
 import { CreateMateriaDto } from './dto/create-materia.dto.js';
 import { UpdateMateriaDto } from './dto/update-materia.dto.js';
 
+@ApiTags('Materias')
 @Controller('materias')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -70,9 +68,7 @@ export class MateriasController {
     status: 404,
     description: 'Materia no encontrada.',
   })
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.materiasService.findOne(id);
   }
 
@@ -127,9 +123,7 @@ export class MateriasController {
     description:
       'No se puede eliminar la materia porque tiene relaciones existentes.',
   })
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.materiasService.remove(id);
   }
 }

@@ -9,13 +9,8 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
 import { Transform } from 'class-transformer';
-
-import {
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
-
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoMateria } from '../../generated/prisma/enums.js';
 
 export class UpdateMateriaDto {
@@ -69,7 +64,7 @@ export class UpdateMateriaDto {
 
   @ApiPropertyOptional({
     description: 'Costo de inscripción de la materia.',
-    example: 2500.00,
+    example: 2500.0,
   })
   @IsOptional()
   @IsNumber(
@@ -86,7 +81,7 @@ export class UpdateMateriaDto {
 
   @ApiPropertyOptional({
     description: 'Costo mensual de la materia.',
-    example: 1800.00,
+    example: 1800.0,
   })
   @IsOptional()
   @IsNumber(

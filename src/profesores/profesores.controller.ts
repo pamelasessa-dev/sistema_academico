@@ -9,26 +9,24 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-
 import { RolUsuario } from '../generated/prisma/enums.js';
-
 import { ProfesoresService } from './profesores.service.js';
 import { CreateProfesorDto } from './dto/create-profesor.dto.js';
 import { UpdateProfesorDto } from './dto/update-profesor.dto.js';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 
-@Controller('profesores')
+@ApiTags('Profesores')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('profesores')
 export class ProfesoresController {
   constructor(
     private readonly profesoresService: ProfesoresService,
@@ -46,15 +44,8 @@ export class ProfesoresController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de profesores obtenida correctamente.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autenticado.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Sin permisos suficientes.',
+    description:
+      'Lista de profesores obtenida correctamente.',
   })
   findAll() {
     return this.profesoresService.findAll();
@@ -73,14 +64,6 @@ export class ProfesoresController {
   @ApiResponse({
     status: 200,
     description: 'Profesor encontrado.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autenticado.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Sin permisos suficientes.',
   })
   @ApiResponse({
     status: 404,
@@ -106,14 +89,6 @@ export class ProfesoresController {
     description: 'Datos inválidos.',
   })
   @ApiResponse({
-    status: 401,
-    description: 'No autenticado.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo ADMIN puede crear profesores.',
-  })
-  @ApiResponse({
     status: 409,
     description: 'El email ya existe.',
   })
@@ -133,14 +108,6 @@ export class ProfesoresController {
   @ApiResponse({
     status: 400,
     description: 'Datos inválidos.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autenticado.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo ADMIN puede modificar profesores.',
   })
   @ApiResponse({
     status: 404,
@@ -164,19 +131,17 @@ export class ProfesoresController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Profesor eliminado correctamente.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autenticado.',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Solo ADMIN puede eliminar profesores.',
+    description:
+      'Profesor eliminado correctamente.',
   })
   @ApiResponse({
     status: 404,
     description: 'Profesor no encontrado.',
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'No se puede eliminar el profesor porque tiene grupos asociados.',
   })
   remove(
     @Param('id', ParseIntPipe) id: number,

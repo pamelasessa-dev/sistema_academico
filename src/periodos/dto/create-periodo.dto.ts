@@ -9,14 +9,11 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
 import { Transform } from 'class-transformer';
-
 import {
   ApiProperty,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
-
 import { EstadoPeriodo } from '../../generated/prisma/enums.js';
 
 export class CreatePeriodoDto {
@@ -61,7 +58,8 @@ export class CreatePeriodoDto {
   @IsDateString(
     {},
     {
-      message: 'La fecha de finalización debe ser una fecha válida',
+      message:
+        'La fecha de finalización debe ser una fecha válida',
     },
   )
   @IsNotEmpty({
@@ -78,7 +76,8 @@ export class CreatePeriodoDto {
     message: 'El límite de créditos debe ser un número entero',
   })
   @Min(1, {
-    message: 'El límite de créditos debe ser mayor o igual a 1',
+    message:
+      'El límite de créditos debe ser mayor o igual a 1',
   })
   limite_creditos: number;
 

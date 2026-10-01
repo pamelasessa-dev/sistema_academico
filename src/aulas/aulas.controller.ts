@@ -9,30 +9,27 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 
-import { RolUsuario } from '../generated/prisma/enums.js';
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
-
+import { RolesGuard } from '../common/guards/roles.guard.js';
+import { RolUsuario } from '../generated/prisma/enums.js';
 import { AulasService } from './aulas.service.js';
 import { CreateAulaDto } from './dto/create-aula.dto.js';
 import { UpdateAulaDto } from './dto/update-aula.dto.js';
 
-@Controller('aulas')
+@ApiTags('Aulas')
 @ApiBearerAuth()
+@Controller('aulas')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AulasController {
-  constructor(
-    private readonly aulasService: AulasService,
-  ) {}
+  constructor(private readonly aulasService: AulasService) {}
 
   @Get()
   @Roles(
@@ -86,9 +83,7 @@ export class AulasController {
     status: 404,
     description: 'Aula no encontrada.',
   })
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.aulasService.findOne(id);
   }
 
@@ -159,6 +154,10 @@ export class AulasController {
     description: 'Aula eliminada correctamente.',
   })
   @ApiResponse({
+    status: 400,
+    description: 'No se puede eliminar un aula asociada a grupos.',
+  })
+  @ApiResponse({
     status: 401,
     description: 'No autenticado.',
   })
@@ -170,9 +169,7 @@ export class AulasController {
     status: 404,
     description: 'Aula no encontrada.',
   })
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.aulasService.remove(id);
   }
 }

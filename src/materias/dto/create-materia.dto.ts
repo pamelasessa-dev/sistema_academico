@@ -9,14 +9,11 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
 import { Transform } from 'class-transformer';
-
 import {
   ApiProperty,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
-
 import { EstadoMateria } from '../../generated/prisma/enums.js';
 
 export class CreateMateriaDto {
@@ -68,7 +65,7 @@ export class CreateMateriaDto {
 
   @ApiProperty({
     description: 'Costo de inscripción de la materia.',
-    example: 2500.00,
+    example: 2500.0,
   })
   @IsNumber(
     { maxDecimalPlaces: 2 },
@@ -84,7 +81,7 @@ export class CreateMateriaDto {
 
   @ApiProperty({
     description: 'Costo mensual de la materia.',
-    example: 1800.00,
+    example: 1800.0,
   })
   @IsNumber(
     { maxDecimalPlaces: 2 },
