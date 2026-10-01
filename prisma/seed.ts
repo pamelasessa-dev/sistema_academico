@@ -26,6 +26,7 @@ async function main() {
 
   const adminPasswordHash = await bcrypt.hash("Admin123", 10);
   const profesorPasswordHash = await bcrypt.hash("Profesor123", 10);
+  const estudiantePasswordHash = await bcrypt.hash("Estudiante123", 10);
 
   // =====================================================
   //  USUARIO ADMIN
@@ -101,6 +102,48 @@ async function main() {
         telefono: "099123456",
         email: "carlos.gomez@example.com",
         direccion: "Montevideo",
+      },
+    }));
+
+  // =====================================================
+  //  USUARIO ESTUDIANTE
+  // =====================================================
+
+  const estudianteUsuario = await prisma.usuario.upsert({
+    where: {
+      email: "estudiante@sistemaacademico.com",
+    },
+    update: {},
+    create: {
+      primer_nombre: "Ana",
+      primer_apellido: "García",
+      email: "estudiante@sistemaacademico.com",
+      password: estudiantePasswordHash,
+      rol: "ESTUDIANTE",
+      estado: "ACTIVO",
+    },
+  });
+
+  // =====================================================
+  //  ESTUDIANTE
+  // =====================================================
+
+  const estudianteExistente = await prisma.estudiante.findUnique({
+    where: {
+      id_usuario: estudianteUsuario.id_usuario,
+    },
+  });
+
+  const estudiante =
+    estudianteExistente ??
+    (await prisma.estudiante.create({
+      data: {
+        id_usuario: estudianteUsuario.id_usuario,
+        id_tutor: tutor.id_tutor,
+        nro_matricula: "EST-2026-001",
+        fecha_nacimiento: new Date("2005-05-15"),
+        direccion: "Montevideo",
+        fecha_ingreso: new Date("2026-03-01"),
       },
     }));
 
@@ -199,25 +242,50 @@ async function main() {
     }));
 
   // =====================================================
+  //  HORARIO
+  // =====================================================
+
+  const horarioExistente = await prisma.horario.findFirst({
+    where: {
+      id_grupo: grupo.id_grupo,
+      dia_semana: "LUNES",
+    },
+  });
+
+  const horario =
+    horarioExistente ??
+    (await prisma.horario.create({
+      data: {
+        id_grupo: grupo.id_grupo,
+        dia_semana: "LUNES",
+        hora_inicio: new Date("1970-01-01T18:00:00"),
+        hora_fin: new Date("1970-01-01T20:00:00"),
+      },
+    }));
+
+  // =====================================================
   //  RESULTADO
   // =====================================================
 
-  console.log(" Seed completado correctamente.");
+  console.log("Seed completado correctamente.");
 
   console.log({
     admin: admin.email,
     profesor: profesorUsuario.email,
+    estudiante: estudianteUsuario.email,
+    nro_matricula: estudiante.nro_matricula,
     tutor: tutor.email,
     periodo: periodo.id_periodo,
     materia: materia.id_materia,
     aula: aula.id_aula,
     grupo: grupo.id_grupo,
+    horario: horario.id_horario,
   });
 }
 
 main()
   .catch((error) => {
-    console.error("❌ Error ejecutando el seed:", error);
+    console.error(" Error ejecutando el seed:", error);
     process.exit(1);
   })
   .finally(async () => {
