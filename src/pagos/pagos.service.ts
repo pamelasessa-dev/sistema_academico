@@ -26,7 +26,88 @@ export class PagosService {
     private readonly auditoria: AuditoriaService,
     private readonly mockPay: MockPayService,
   ) {}
+  
+  async findAll() {
+    return this.prisma.pago.findMany({
+      orderBy: {
+        fecha_pago: 'desc',
+      },
+      include: {
+        obligacion: {
+          include: {
+            estudiante: {
+              include: {
+                usuario: {
+                  select: {
+                    id_usuario: true,
+                    primer_nombre: true,
+                    segundo_nombre: true,
+                    primer_apellido: true,
+                    segundo_apellido: true,
+                    email: true,
+                  },
+                },
+             },
+           },
+         },
+       },
+       usuario_verificador: {
+        select: {
+          id_usuario: true,
+          primer_nombre: true,
+          segundo_nombre: true,
+          primer_apellido: true,
+          segundo_apellido: true,
+          email: true,
+        },
+      },
+    },
+  });
+}
 
+async findOne(idPago: number) {
+  const pago = await this.prisma.pago.findUnique({
+    where: {
+      id_pago: idPago,
+    },
+    include: {
+      obligacion: {
+        include: {
+          estudiante: {
+            include: {
+              usuario: {
+                select: {
+                  id_usuario: true,
+                  primer_nombre: true,
+                  segundo_nombre: true,
+                  primer_apellido: true,
+                  segundo_apellido: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      usuario_verificador: {
+        select: {
+          id_usuario: true,
+          primer_nombre: true,
+          segundo_nombre: true,
+          primer_apellido: true,
+          segundo_apellido: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!pago) {
+    throw new NotFoundException('El pago no existe');
+  }
+
+  return pago;
+}
   async create(idUsuario: number, dto: CreatePagoDto) {
     const estudiante = await this.prisma.estudiante.findUnique({
       where: {
