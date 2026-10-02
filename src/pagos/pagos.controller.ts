@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -29,6 +30,59 @@ import { PagosService } from './pagos.service.js';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PagosController {
   constructor(private readonly service: PagosService) {}
+
+  @Get()
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+  )
+  @ApiOperation({
+    summary: 'Listar pagos',
+    description:
+    'Permite consultar los pagos registrados en el sistema.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Listado de pagos obtenido correctamente.',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+    'El usuario no tiene permisos para consultar los pagos.',
+  })
+  findAll() {
+    return this.service.findAll();
+  }
+  
+  @Get(':id')
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+  )
+  @ApiOperation({
+    summary: 'Consultar un pago por ID',
+    description:
+    'Permite consultar el detalle de un pago registrado.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Pago encontrado correctamente.',
+  })
+  
+  @ApiResponse({
+    status: 403,
+    description:
+    'El usuario no tiene permisos para consultar los pagos.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'El pago no existe.',
+  })
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.findOne(id);
+  }
 
   @Post()
   @Roles(RolUsuario.ESTUDIANTE)
