@@ -9,7 +9,8 @@ export class UpdateUsuarioEstadoDto {
     description: 'Nuevo estado del usuario',
   })
   @IsEnum(EstadoUsuario, {
-    message: 'El estado debe ser PENDIENTE, ACTIVO, SUSPENDIDO o INACTIVO',
+    message:
+      'El estado debe ser PENDIENTE, ACTIVO, SUSPENDIDO o INACTIVO',
   })
   estado!: EstadoUsuario;
 }

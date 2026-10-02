@@ -14,14 +14,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { RolesGuard } from '../common/guards/roles.guard.js';
-import { Roles } from '../common/decorators/roles.decorator.js';
-import { CurrentUser } from '../common/auth/current-user.decorator.js';
 import type { AuthUser } from '../common/auth/auth-user.js';
+import { CurrentUser } from '../common/auth/current-user.decorator.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
+import { RolesGuard } from '../common/guards/roles.guard.js';
 import { RolUsuario } from '../generated/prisma/enums.js';
-import { PagosService } from './pagos.service.js';
 import { CreatePagoDto } from './dto/create-pago.dto.js';
 import { RechazarPagoDto } from './dto/rechazar-pago.dto.js';
+import { PagosService } from './pagos.service.js';
 
 @ApiTags('Pagos')
 @ApiBearerAuth()
@@ -37,11 +37,13 @@ export class PagosController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Pago registrado en estado PENDIENTE.',
+    description:
+      'Pago registrado en estado PENDIENTE.',
   })
   @ApiResponse({
     status: 400,
-    description: 'La obligación no permite registrar el pago.',
+    description:
+      'La obligación no permite registrar el pago.',
   })
   @ApiResponse({
     status: 403,
@@ -60,13 +62,17 @@ export class PagosController {
   }
 
   @Patch(':id/aprobar')
-  @Roles(RolUsuario.ADMIN, RolUsuario.RECEPCIONISTA)
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+  )
   @ApiOperation({
     summary: 'Aprobar un pago',
   })
   @ApiResponse({
     status: 200,
-    description: 'Pago aprobado correctamente.',
+    description:
+      'Pago aprobado correctamente.',
   })
   @ApiResponse({
     status: 400,
@@ -80,17 +86,24 @@ export class PagosController {
     @CurrentUser() user: AuthUser,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.service.aprobar(user.id_usuario, id);
+    return this.service.aprobar(
+      user.id_usuario,
+      id,
+    );
   }
 
   @Patch(':id/rechazar')
-  @Roles(RolUsuario.ADMIN, RolUsuario.RECEPCIONISTA)
+  @Roles(
+    RolUsuario.ADMIN,
+    RolUsuario.RECEPCIONISTA,
+  )
   @ApiOperation({
     summary: 'Rechazar un pago',
   })
   @ApiResponse({
     status: 200,
-    description: 'Pago rechazado correctamente.',
+    description:
+      'Pago rechazado correctamente.',
   })
   @ApiResponse({
     status: 400,

@@ -3,8 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+import {
+  EstadoObligacion,
+  EstadoUsuario,
+} from '../generated/prisma/enums.js';
+
 import { PrismaService } from '../prisma/prisma.service.js';
-import { EstadoObligacion } from '../generated/prisma/enums.js';
 
 @Injectable()
 export class ObligacionesService {
@@ -93,18 +98,89 @@ export class ObligacionesService {
   }
 
   async actualizarMora() {
-    const ahora = new Date();
+    return this.prisma.$transaction(async (tx) => {
+      const ahora = new Date();
 
-    return this.prisma.obligacionFinanciera.updateMany({
-      where: {
-        estado: EstadoObligacion.PENDIENTE,
-        fecha_vencimiento: {
-          lt: ahora,
+      const obligacionesVencidas =
+        await tx.obligacionFinanciera.findMany({
+          where: {
+            estado: EstadoObligacion.PENDIENTE,
+            fecha_vencimiento: {
+              lt: ahora,
+            },
+          },
+          select: {
+            id_estudiante: true,
+          },
+        });
+
+      if (obligacionesVencidas.length === 0) {
+        return {
+          obligacionesVencidas: 0,
+          estudiantesSuspendidos: 0,
+        };
+      }
+
+      await tx.obligacionFinanciera.updateMany({
+        where: {
+          estado: EstadoObligacion.PENDIENTE,
+          fecha_vencimiento: {
+            lt: ahora,
+          },
         },
-      },
-      data: {
-        estado: EstadoObligacion.VENCIDA,
-      },
+        data: {
+          estado: EstadoObligacion.VENCIDA,
+        },
+      });
+
+      const idsEstudiantes = [
+        ...new Set(
+          obligacionesVencidas.map(
+            (obligacion) => obligacion.id_estudiante,
+          ),
+        ),
+      ];
+
+      const estudiantes =
+        await tx.estudiante.findMany({
+          where: {
+            id_estudiante: {
+              in: idsEstudiantes,
+            },
+          },
+          select: {
+            id_usuario: true,
+          },
+        });
+
+      const idsUsuarios = estudiantes.map(
+        (estudiante) => estudiante.id_usuario,
+      );
+
+      if (idsUsuarios.length === 0) {
+        return {
+          obligacionesVencidas: obligacionesVencidas.length,
+          estudiantesSuspendidos: 0,
+        };
+      }
+
+      const resultado =
+        await tx.usuario.updateMany({
+          where: {
+            id_usuario: {
+              in: idsUsuarios,
+            },
+            estado: EstadoUsuario.ACTIVO,
+          },
+          data: {
+            estado: EstadoUsuario.SUSPENDIDO,
+          },
+        });
+
+      return {
+        obligacionesVencidas: obligacionesVencidas.length,
+        estudiantesSuspendidos: resultado.count,
+      };
     });
   }
 

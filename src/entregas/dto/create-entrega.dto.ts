@@ -8,6 +8,7 @@ import {
   IsString,
   IsUrl,
   Min,
+  MinLength,
 } from 'class-validator';
 
 export class CreateEntregaDto {
@@ -15,8 +16,12 @@ export class CreateEntregaDto {
     example: 1,
     description: 'ID de la actividad.',
   })
-  @IsInt()
-  @Min(1)
+  @IsInt({
+    message: 'El ID de la actividad debe ser un número entero.',
+  })
+  @Min(1, {
+    message: 'El ID de la actividad debe ser mayor o igual a 1.',
+  })
   id_actividad: number;
 
   @ApiPropertyOptional({
@@ -24,7 +29,10 @@ export class CreateEntregaDto {
     description: 'URL del archivo entregado.',
   })
   @IsOptional()
-  @IsUrl()
+  @IsUrl(
+    {},
+    { message: 'La URL del archivo no es válida.' },
+  )
   archivo_url?: string;
 
   @ApiPropertyOptional({
@@ -32,6 +40,11 @@ export class CreateEntregaDto {
     description: 'Respuesta escrita del estudiante.',
   })
   @IsOptional()
-  @IsString()
+  @IsString({
+    message: 'La respuesta debe ser texto.',
+  })
+  @MinLength(1, {
+    message: 'La respuesta no puede estar vacía.',
+  })
   respuesta_texto?: string;
 }

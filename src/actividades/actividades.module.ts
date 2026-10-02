@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { ActividadesController } from './actividades.controller.js';
 import { ActividadesService } from './actividades.service.js';

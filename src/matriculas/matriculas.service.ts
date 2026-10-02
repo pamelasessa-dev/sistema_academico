@@ -1,10 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../prisma/prisma.service.js';
+
 import {
   ConceptoObligacion,
   EstadoGrupo,
@@ -13,14 +16,24 @@ import {
   EstadoObligacion,
   EstadoPeriodo,
   EstadoUsuario,
+  EstadoPago,
 } from '../generated/prisma/enums.js';
+
+import { ObligacionesService } from '../finanzas/obligaciones.service.js';
+
 import { CreateMatriculaDto } from './dto/create-matricula.dto.js';
 
 @Injectable()
 export class MatriculasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly obligacionesService: ObligacionesService,
+  ) {}
 
   async create(idUsuario: number, dto: CreateMatriculaDto) {
+    await this.obligacionesService.actualizarMora();
+    await this.cancelarMatriculasPorMora();
+
     const estudiante = await this.prisma.estudiante.findUnique({
       where: {
         id_usuario: idUsuario,
@@ -75,24 +88,6 @@ export class MatriculasService {
       );
     }
 
-    const cantidadMatriculas = await this.prisma.matricula.count({
-      where: {
-        id_grupo: dto.id_grupo,
-        estado: {
-          in: [
-            EstadoMatricula.PENDIENTE,
-            EstadoMatricula.ACTIVA,
-          ],
-        },
-      },
-    });
-
-    if (cantidadMatriculas >= grupo.cupo_maximo) {
-      throw new BadRequestException(
-        'El grupo no tiene cupos disponibles',
-      );
-    }
-
     const matriculaExistente =
       await this.prisma.matricula.findUnique({
         where: {
@@ -104,7 +99,7 @@ export class MatriculasService {
       });
 
     if (matriculaExistente) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'El estudiante ya está matriculado en este grupo',
       );
     }
@@ -126,32 +121,33 @@ export class MatriculasService {
     });
 
     if (mismaMateria) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'El estudiante ya está matriculado en esta materia durante el período actual',
       );
     }
 
-    const matriculasPeriodo = await this.prisma.matricula.findMany({
-      where: {
-        id_estudiante: estudiante.id_estudiante,
-        estado: {
-          in: [
-            EstadoMatricula.PENDIENTE,
-            EstadoMatricula.ACTIVA,
-          ],
-        },
-        grupo: {
-          id_periodo: grupo.id_periodo,
-        },
-      },
-      include: {
-        grupo: {
-          include: {
-            materia: true,
+    const matriculasPeriodo =
+      await this.prisma.matricula.findMany({
+        where: {
+          id_estudiante: estudiante.id_estudiante,
+          estado: {
+            in: [
+              EstadoMatricula.PENDIENTE,
+              EstadoMatricula.ACTIVA,
+            ],
+          },
+          grupo: {
+            id_periodo: grupo.id_periodo,
           },
         },
-      },
-    });
+        include: {
+          grupo: {
+            include: {
+              materia: true,
+            },
+          },
+        },
+      });
 
     const creditosActuales = matriculasPeriodo.reduce(
       (total, matricula) =>
@@ -238,6 +234,42 @@ export class MatriculasService {
 
     const resultado = await this.prisma.$transaction(
       async (tx) => {
+        const cantidadActual =
+          await tx.matricula.count({
+            where: {
+              id_grupo: grupo.id_grupo,
+              estado: {
+                in: [
+                  EstadoMatricula.PENDIENTE,
+                  EstadoMatricula.ACTIVA,
+                ],
+              },
+            },
+          });
+
+        if (cantidadActual >= grupo.cupo_maximo) {
+          throw new ConflictException(
+            'El grupo no tiene cupos disponibles',
+          );
+        }
+
+        const matriculaExistente =
+          await tx.matricula.findUnique({
+            where: {
+              id_estudiante_id_grupo: {
+                id_estudiante:
+                  estudiante.id_estudiante,
+                id_grupo: grupo.id_grupo,
+              },
+            },
+          });
+
+        if (matriculaExistente) {
+          throw new ConflictException(
+            'El estudiante ya está matriculado en este grupo',
+          );
+        }
+
         const matricula = await tx.matricula.create({
           data: {
             id_estudiante: estudiante.id_estudiante,
@@ -250,13 +282,18 @@ export class MatriculasService {
         const obligacion =
           await tx.obligacionFinanciera.create({
             data: {
-              id_estudiante: estudiante.id_estudiante,
-              id_matricula: matricula.id_matricula,
-              concepto: ConceptoObligacion.INSCRIPCION,
+              id_estudiante:
+                estudiante.id_estudiante,
+              id_matricula:
+                matricula.id_matricula,
+              concepto:
+                ConceptoObligacion.INSCRIPCION,
               monto: grupo.materia.costos_inscripcion,
               fecha_emision: ahora,
-              fecha_vencimiento: fechaVencimiento,
-              estado: EstadoObligacion.PENDIENTE,
+              fecha_vencimiento:
+                fechaVencimiento,
+              estado:
+                EstadoObligacion.PENDIENTE,
             },
           });
 
@@ -275,7 +312,198 @@ export class MatriculasService {
     };
   }
 
+  async activar(
+    idMatricula: number,
+    idRecepcionista: number,
+  ) {
+    const matricula =
+      await this.prisma.matricula.findUnique({
+        where: {
+          id_matricula: idMatricula,
+        },
+        include: {
+          estudiante: {
+            include: {
+              usuario: true,
+            },
+          },
+          grupo: {
+            include: {
+              materia: true,
+              periodo: true,
+            },
+          },
+          obligaciones: {
+            where: {
+              concepto:
+                ConceptoObligacion.INSCRIPCION,
+            },
+            include: {
+              pagos: true,
+            },
+          },
+        },
+      });
+
+    if (!matricula) {
+      throw new NotFoundException(
+        'Matrícula no encontrada',
+      );
+    }
+
+    if (
+      matricula.estado !==
+      EstadoMatricula.PENDIENTE
+    ) {
+      throw new ConflictException(
+        'La matrícula no está pendiente de activación',
+      );
+    }
+
+    if (
+      matricula.estudiante.usuario.estado !==
+      EstadoUsuario.ACTIVO
+    ) {
+      throw new BadRequestException(
+        'El estudiante no está activo',
+      );
+    }
+
+    if (
+      matricula.grupo.estado !==
+      EstadoGrupo.ABIERTO
+    ) {
+      throw new BadRequestException(
+        'El grupo no está abierto',
+      );
+    }
+
+    if (
+      matricula.grupo.periodo.estado !==
+      EstadoPeriodo.ACTIVO
+    ) {
+      throw new BadRequestException(
+        'El período no está activo',
+      );
+    }
+
+    if (
+      matricula.grupo.materia.estado !==
+      EstadoMateria.ACTIVA
+    ) {
+      throw new BadRequestException(
+        'La materia no está activa',
+      );
+    }
+
+    const obligacion =
+      matricula.obligaciones[0];
+
+    if (!obligacion) {
+      throw new BadRequestException(
+        'La matrícula no tiene una obligación de inscripción asociada',
+      );
+    }
+
+    if (
+      obligacion.estado !==
+      EstadoObligacion.PAGADA
+    ) {
+      throw new BadRequestException(
+        'La obligación de inscripción todavía no está pagada',
+      );
+    }
+
+    const montoAprobado =
+      obligacion.pagos
+        .filter(
+          (pago) =>
+            pago.estado === EstadoPago.APROBADO,
+        )
+        .reduce(
+          (total, pago) =>
+            total + Number(pago.monto),
+          0,
+        );
+
+    if (
+      montoAprobado <
+      Number(obligacion.monto)
+    ) {
+      throw new BadRequestException(
+        'El monto de los pagos aprobados no cubre la obligación de inscripción',
+      );
+    }
+
+    const ahora = new Date();
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        const matriculaActual =
+          await tx.matricula.findUnique({
+            where: {
+              id_matricula: idMatricula,
+            },
+          });
+
+        if (!matriculaActual) {
+          throw new NotFoundException(
+            'Matrícula no encontrada',
+          );
+        }
+
+        if (
+          matriculaActual.estado !==
+          EstadoMatricula.PENDIENTE
+        ) {
+          throw new ConflictException(
+            'La matrícula ya no está pendiente de activación',
+          );
+        }
+
+        const matriculaActualizada =
+          await tx.matricula.update({
+            where: {
+              id_matricula: idMatricula,
+            },
+            data: {
+              estado:
+                EstadoMatricula.ACTIVA,
+            },
+          });
+
+        await tx.auditoria.create({
+          data: {
+            id_usuario: idRecepcionista,
+            entidad: 'Matricula',
+            id_registro: idMatricula,
+            accion: 'ACTIVAR_MATRICULA',
+            valor_anterior: {
+              estado:
+                EstadoMatricula.PENDIENTE,
+            },
+            valor_nuevo: {
+              estado:
+                EstadoMatricula.ACTIVA,
+            },
+            detalle:
+              'Matrícula activada por Recepción luego de verificar el pago de inscripción',
+          },
+        });
+
+        return {
+          mensaje:
+            'Matrícula activada correctamente',
+          matricula: matriculaActualizada,
+        };
+      },
+    );
+  }
+
   async findMyEnrollments(idUsuario: number) {
+    await this.obligacionesService.actualizarMora();
+    await this.cancelarMatriculasPorMora();
+
     const estudiante = await this.prisma.estudiante.findUnique({
       where: {
         id_usuario: idUsuario,
@@ -323,6 +551,23 @@ export class MatriculasService {
       },
       orderBy: {
         fecha_matricula: 'desc',
+      },
+    });
+  }
+
+  private async cancelarMatriculasPorMora() {
+    await this.prisma.matricula.updateMany({
+      where: {
+        estado: EstadoMatricula.PENDIENTE,
+        obligaciones: {
+          some: {
+            estado: EstadoObligacion.VENCIDA,
+            concepto: ConceptoObligacion.INSCRIPCION,
+          },
+        },
+      },
+      data: {
+        estado: EstadoMatricula.CANCELADA,
       },
     });
   }
