@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import {
   EstadoActividad,
   EstadoGrupo,
@@ -77,8 +76,8 @@ export class ActividadesService {
     return this.prisma.actividadAcademica.create({
       data: {
         id_grupo: dto.id_grupo,
-        titulo: dto.titulo,
-        descripcion: dto.descripcion,
+        titulo: dto.titulo.trim(),
+        descripcion: dto.descripcion?.trim(),
         tipo: dto.tipo,
         puntaje_maximo: dto.puntaje_maximo,
         porcentaje_aporte: dto.porcentaje_aporte,
@@ -193,10 +192,10 @@ export class ActividadesService {
       },
       data: {
         ...(dto.titulo !== undefined && {
-          titulo: dto.titulo,
+          titulo: dto.titulo.trim(),
         }),
         ...(dto.descripcion !== undefined && {
-          descripcion: dto.descripcion,
+          descripcion: dto.descripcion.trim(),
         }),
         ...(dto.tipo !== undefined && {
           tipo: dto.tipo,

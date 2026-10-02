@@ -14,14 +14,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { RolesGuard } from '../common/guards/roles.guard.js';
-import { Roles } from '../common/decorators/roles.decorator.js';
-import { CurrentUser } from '../common/auth/current-user.decorator.js';
 import type { AuthUser } from '../common/auth/auth-user.js';
+import { CurrentUser } from '../common/auth/current-user.decorator.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
+import { RolesGuard } from '../common/guards/roles.guard.js';
 import { RolUsuario } from '../generated/prisma/enums.js';
 import { EntregasService } from './entregas.service.js';
-import { CreateEntregaDto } from './dto/create-entrega.dto.js';
 import { CalificarEntregaDto } from './dto/calificar-entrega.dto.js';
+import { CreateEntregaDto } from './dto/create-entrega.dto.js';
 
 @ApiTags('Entregas')
 @ApiBearerAuth()
@@ -32,7 +32,9 @@ export class EntregasController {
 
   @Post()
   @Roles(RolUsuario.ESTUDIANTE)
-  @ApiOperation({ summary: 'Crear una entrega' })
+  @ApiOperation({
+    summary: 'Crear una entrega',
+  })
   @ApiResponse({
     status: 201,
     description: 'Entrega creada correctamente.',
@@ -43,7 +45,8 @@ export class EntregasController {
   })
   @ApiResponse({
     status: 403,
-    description: 'El estudiante no tiene permiso para realizar la entrega.',
+    description:
+      'El estudiante no tiene permiso para realizar la entrega.',
   })
   create(
     @CurrentUser() user: AuthUser,
@@ -54,7 +57,9 @@ export class EntregasController {
 
   @Get('me')
   @Roles(RolUsuario.ESTUDIANTE)
-  @ApiOperation({ summary: 'Consultar mis entregas' })
+  @ApiOperation({
+    summary: 'Consultar mis entregas',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de entregas del estudiante.',
@@ -74,7 +79,8 @@ export class EntregasController {
   })
   @ApiResponse({
     status: 403,
-    description: 'El profesor no es responsable de la actividad.',
+    description:
+      'El profesor no es responsable de la actividad.',
   })
   findByActivity(
     @CurrentUser() user: AuthUser,
@@ -88,9 +94,11 @@ export class EntregasController {
 
   @Post(':id/calificar')
   @Roles(RolUsuario.PROFESOR)
-  @ApiOperation({ summary: 'Calificar una entrega' })
+  @ApiOperation({
+    summary: 'Calificar una entrega',
+  })
   @ApiResponse({
-    status: 201,
+    status: 200,
     description: 'Entrega calificada correctamente.',
   })
   @ApiResponse({

@@ -335,6 +335,8 @@ model Pago {
   estado                 EstadoPago
   fecha_validacion       DateTime?
   observacion            String?
+  id_mockpay             String?    @unique
+  checkout_url           String?
 
   obligacion ObligacionFinanciera @relation(fields: [id_obligacion], references: [id_obligacion])
 

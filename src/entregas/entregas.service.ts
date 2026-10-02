@@ -4,22 +4,25 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
 import {
   EstadoActividad,
   EstadoEntrega,
   EstadoMatricula,
   EstadoObligacion,
 } from '../generated/prisma/enums.js';
-import { CreateEntregaDto } from './dto/create-entrega.dto.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { CalificarEntregaDto } from './dto/calificar-entrega.dto.js';
+import { CreateEntregaDto } from './dto/create-entrega.dto.js';
 
 @Injectable()
 export class EntregasService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(idUsuario: number, dto: CreateEntregaDto) {
-    if (!dto.archivo_url && !dto.respuesta_texto) {
+    const archivoUrl = dto.archivo_url?.trim();
+    const respuestaTexto = dto.respuesta_texto?.trim();
+
+    if (!archivoUrl && !respuestaTexto) {
       throw new BadRequestException(
         'Debes proporcionar un archivo o una respuesta de texto',
       );
@@ -120,8 +123,8 @@ export class EntregasService {
         id_actividad: dto.id_actividad,
         id_matricula: matricula.id_matricula,
         fecha_entrega: ahora,
-        archivo_url: dto.archivo_url,
-        respuesta_texto: dto.respuesta_texto,
+        archivo_url: archivoUrl,
+        respuesta_texto: respuestaTexto,
         estado: EstadoEntrega.ENTREGADA,
       },
     });
@@ -212,6 +215,7 @@ export class EntregasService {
               include: {
                 usuario: {
                   select: {
+                    id_usuario: true,
                     primer_nombre: true,
                     primer_apellido: true,
                     email: true,
@@ -292,7 +296,8 @@ export class EntregasService {
       },
       data: {
         puntaje_obtenido: dto.puntaje_obtenido,
-        observacion_docente: dto.observacion_docente,
+        observacion_docente:
+          dto.observacion_docente?.trim(),
         estado: EstadoEntrega.CALIFICADA,
       },
     });

@@ -24,9 +24,7 @@ import { ObligacionesService } from './obligaciones.service.js';
 @Controller('obligaciones')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ObligacionesController {
-  constructor(
-    private readonly service: ObligacionesService,
-  ) {}
+  constructor(private readonly service: ObligacionesService) {}
 
   @Get('me')
   @Roles(RolUsuario.ESTUDIANTE)

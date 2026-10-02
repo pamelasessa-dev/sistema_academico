@@ -8,6 +8,8 @@ export class UpdateEstadoActividadDto {
     example: EstadoActividad.ABIERTA,
     description: 'Nuevo estado de la actividad.',
   })
-  @IsEnum(EstadoActividad)
+  @IsEnum(EstadoActividad, {
+    message: 'El estado de la actividad no es válido.',
+  })
   estado: EstadoActividad;
 }
