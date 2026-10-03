@@ -1,4 +1,16 @@
-## Entidades
+# SGAF — Sistema de Gestión Académica y Financiera
+
+---
+
+# Diagrama Entidad-Relación
+
+El siguiente diagrama representa las entidades principales del Sistema de Gestión Académica y Financiera (SGAF), sus atributos, claves primarias, claves foráneas y relaciones.
+
+![Diagrama Entidad-Relación del SGAF](DER/der-sgaf.png)
+
+---
+
+# Entidades
 
 ## Entidad: Usuario
 
@@ -16,286 +28,506 @@
 | `estado`           | ENUM          | Obligatorio        |
 | `fecha_creacion`   | Fecha/Hora    | Obligatorio        |
 
+**Valores de `rol`:**
 
-Valores de rol: ADMIN, RECEPCIONISTA, PROFESOR, ESTUDIANTE.
+- `ADMIN`
+- `RECEPCIONISTA`
+- `PROFESOR`
+- `ESTUDIANTE`
 
-Valores de estado: PENDIENTE, ACTIVO, SUSPENDIDO, INACTIVO.
+**Valores de `estado`:**
 
+- `PENDIENTE`
+- `ACTIVO`
+- `SUSPENDIDO`
+- `INACTIVO`
+
+---
 
 ## Entidad: Estudiante
 
-| Atributo           | Tipo          | Notas                 |
-| ------------------ | ------------- | --------------------- |
-| `id_estudiante`    | Numero Entero | [PK] autoincremental  |
-| `id_usuario`       | Numero Entero | [FK - Usuario], unico |
-| `id_tutor`         | Numero Entero | [FK - Tutor]          |
-| `nro_matricula`    | Texto         | Obligatorio, unico    |
-| `fecha_nacimiento` | Fecha         | Obligatorio           |
-| `direccion`        | Texto         | Opcional              |
-| `fecha_ingreso`    | Fecha         | Obligatorio           |
+| Atributo           | Tipo          | Notas               |
+| ------------------ | ------------- | ------------------- |
+| `id_estudiante`    | Número Entero | PK autoincremental  |
+| `id_usuario`       | Número Entero | FK → Usuario, único |
+| `id_tutor`         | Número Entero | FK → Tutor          |
+| `nro_matricula`    | Texto         | Obligatorio, único  |
+| `fecha_nacimiento` | Fecha         | Obligatorio         |
+| `direccion`        | Texto         | Opcional            |
+| `fecha_ingreso`    | Fecha         | Obligatorio         |
 
+---
 
 ## Entidad: Profesor
 
-| Atributo             | Tipo          | Notas                 |
-| -------------------- | ------------- | --------------------- |
-| `id_profesor`        | Numero Entero | [PK] autoincremental  |
-| `id_usuario`         | Numero Entero | [FK - Usuario], unico |
-| `especialidad`       | Texto         | Obligatorio           |
-| `fecha_contratacion` | Fecha         | Obligatorio           |
+| Atributo             | Tipo          | Notas               |
+| -------------------- | ------------- | ------------------- |
+| `id_profesor`        | Número Entero | PK autoincremental  |
+| `id_usuario`         | Número Entero | FK → Usuario, único |
+| `especialidad`       | Texto         | Obligatorio         |
+| `fecha_contratacion` | Fecha         | Obligatorio         |
 
-
+---
 
 ## Entidad: Tutor
 
-| Atributo     | Tipo          | Notas                |
-| ------------ | ------------- | -------------------- |
-| `id_tutor`   | Numero Entero | [PK] autoincremental |
-| `nombre`     | Texto         | Obligatorio          |
-| `apellido`   | Texto         | Obligatorio          |
-| `parentesco` | Texto         | Obligatorio          |
-| `telefono`   | Texto         | Obligatorio          |
-| `email`      | Texto         | Opcional             |
-| `direccion`  | Texto         | Opcional             |
+| Atributo     | Tipo          | Notas              |
+| ------------ | ------------- | ------------------ |
+| `id_tutor`   | Número Entero | PK autoincremental |
+| `nombre`     | Texto         | Obligatorio        |
+| `apellido`   | Texto         | Obligatorio        |
+| `parentesco` | Texto         | Obligatorio        |
+| `telefono`   | Texto         | Obligatorio        |
+| `email`      | Texto         | Opcional           |
+| `direccion`  | Texto         | Opcional           |
 
-TUTOR tiene su propio email y teléfono de contacto.
+El tutor posee sus propios datos de contacto y puede estar asociado a uno o varios estudiantes.
+
+---
 
 ## Entidad: Periodo
 
-| Atributo          | Tipo          | Notas                |
-| ----------------- | ------------- | -------------------- |
-| `id_periodo`      | Numero Entero | [PK] autoincremental |
-| `nombre`          | Texto         | Obligatorio          |
-| `fecha_inicio`    | Fecha         | Obligatorio          |
-| `fecha_fin`       | Fecha         | Obligatorio          |
-| `limite_creditos` | Numero Entero | Obligatorio          |
-| `estado`          | ENUM          | Obligatorio          |
+| Atributo          | Tipo          | Notas              |
+| ----------------- | ------------- | ------------------ |
+| `id_periodo`      | Número Entero | PK autoincremental |
+| `nombre`          | Texto         | Obligatorio        |
+| `fecha_inicio`    | Fecha         | Obligatorio        |
+| `fecha_fin`       | Fecha         | Obligatorio        |
+| `limite_creditos` | Número Entero | Obligatorio        |
+| `estado`          | ENUM          | Obligatorio        |
 
-Valores de estado: PLANIFICADO, ACTIVO, FINALIZADO.
+**Valores de `estado`:**
 
+- `PLANIFICADO`
+- `ACTIVO`
+- `FINALIZADO`
+
+---
 
 ## Entidad: Materia
 
-| Atributo            | Tipo          | Notas                |
-| ------------------- | ------------- | -------------------- |
-| `id_materia`        | Numero Entero | [PK] autoincremental |
-| `nombre`            | Texto         | Obligatorio          |
-| `descripcion`       | Texto         | Opcional             |
-| `creditos`          | Numero Entero | Obligatorio          |
-| `costo_inscripcion` | Decimal       | Obligatorio          |
-| `costo_mensual`     | Decimal       | Obligatorio          |
-| `estado`            | ENUM          | Obligatorio          |
+| Atributo            | Tipo          | Notas              |
+| ------------------- | ------------- | ------------------ |
+| `id_materia`        | Número Entero | PK autoincremental |
+| `nombre`            | Texto         | Obligatorio        |
+| `descripcion`       | Texto         | Opcional           |
+| `creditos`          | Número Entero | Obligatorio        |
+| `costo_inscripcion` | Decimal       | Obligatorio        |
+| `costo_mensual`     | Decimal       | Obligatorio        |
+| `estado`            | ENUM          | Obligatorio        |
 
-Restricción: una matrícula puede tener una única entrega por actividad.
-Valores de estado: ACTIVA, INACTIVA.
-UNIQUE (id_actividad, id_matricula)
-El estudiante de la matrícula 5 entregó la actividad 1.
+**Valores de `estado`:**
+
+- `ACTIVA`
+- `INACTIVA`
+
+Una materia puede ser ofrecida en diferentes grupos durante distintos períodos.
+
+---
 
 ## Entidad: Aula
 
-| Atributo    | Tipo          | Notas                |
-| ----------- | ------------- | -------------------- |
-| `id_aula`   | Numero Entero | [PK] autoincremental |
-| `nombre`    | Texto         | Obligatorio          |
-| `capacidad` | Numero Entero | Obligatorio          |
-| `ubicacion` | Texto         | Opcional             |
-| `tipo`      | ENUM          | Obligatorio          |
-| `estado`    | ENUM          | Obligatorio          |
+| Atributo    | Tipo          | Notas              |
+| ----------- | ------------- | ------------------ |
+| `id_aula`   | Número Entero | PK autoincremental |
+| `nombre`    | Texto         | Obligatorio        |
+| `capacidad` | Número Entero | Obligatorio        |
+| `ubicacion` | Texto         | Opcional           |
+| `tipo`      | ENUM          | Obligatorio        |
+| `estado`    | ENUM          | Obligatorio        |
 
-Valores de tipo: FISICA, VIRTUAL.
+**Valores de `tipo`:**
 
-Valores de estado: DISPONIBLE, NO_DISPONIBLE.
+- `FISICA`
+- `VIRTUAL`
+
+**Valores de `estado`:**
+
+- `DISPONIBLE`
+- `NO_DISPONIBLE`
+
+---
 
 ## Entidad: Grupo
 
-| Atributo      | Tipo          | Notas                |
-| ------------- | ------------- | -------------------- |
-| `id_grupo`    | Numero Entero | [PK] autoincremental |
-| `id_materia`  | Numero Entero | [FK - Materia]       |
-| `id_periodo`  | Numero Entero | [FK - Periodo]       |
-| `id_profesor` | Numero Entero | [FK - Profesor]      |
-| `id_aula`     | Numero Entero | [FK - Aula]          |
-| `nombre`      | Texto         | Obligatorio          |
-| `cupo_maximo` | Numero Entero | Obligatorio          |
-| `estado`      | ENUM          | Obligatorio          |
+| Atributo      | Tipo          | Notas              |
+| ------------- | ------------- | ------------------ |
+| `id_grupo`    | Número Entero | PK autoincremental |
+| `id_materia`  | Número Entero | FK → Materia       |
+| `id_periodo`  | Número Entero | FK → Periodo       |
+| `id_profesor` | Número Entero | FK → Profesor      |
+| `id_aula`     | Número Entero | FK → Aula          |
+| `nombre`      | Texto         | Obligatorio        |
+| `cupo_maximo` | Número Entero | Obligatorio        |
+| `estado`      | ENUM          | Obligatorio        |
 
-Valores de estado: ABIERTO, CERRADO, FINALIZADO.
+**Valores de `estado`:**
+
+- `ABIERTO`
+- `CERRADO`
+- `FINALIZADO`
+
+Un grupo representa una instancia de una materia dentro de un período, con un profesor, un aula y un cupo determinado.
+
+---
 
 ## Entidad: Horario
 
-| Atributo      | Tipo          | Notas                |
-| ------------- | ------------- | -------------------- |
-| `id_horario`  | Numero Entero | [PK] autoincremental |
-| `id_grupo`    | Numero Entero | [FK - Grupo]         |
-| `dia_semana`  | ENUM          | Obligatorio          |
-| `hora_inicio` | Hora          | Obligatorio          |
-| `hora_fin`    | Hora          | Obligatorio          |
+| Atributo      | Tipo          | Notas              |
+| ------------- | ------------- | ------------------ |
+| `id_horario`  | Número Entero | PK autoincremental |
+| `id_grupo`    | Número Entero | FK → Grupo         |
+| `dia_semana`  | ENUM          | Obligatorio        |
+| `hora_inicio` | Hora          | Obligatorio        |
+| `hora_fin`    | Hora          | Obligatorio        |
 
-Valores de dia_semana: LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO.
+**Valores de `dia_semana`:**
 
-## Entidad: Matricula
+- `LUNES`
+- `MARTES`
+- `MIERCOLES`
+- `JUEVES`
+- `VIERNES`
+- `SABADO`
+- `DOMINGO`
 
-| Atributo          | Tipo          | Notas                |
-| ----------------- | ------------- | -------------------- |
-| `id_matricula`    | Numero Entero | [PK] autoincremental |
-| `id_estudiante`   | Numero Entero | [FK - Estudiante]    |
-| `id_grupo`        | Numero Entero | [FK - Grupo]         |
-| `fecha_matricula` | Fecha         | Obligatorio          |
-| `estado`          | ENUM          | Obligatorio          |
+Un grupo puede tener uno o varios bloques horarios.
 
-Valores de estado: PENDIENTE, ACTIVA, CANCELADA, FINALIZADA.
+---
 
-Restriccion: combinacion id_estudiante + id_grupo unica.
+## Entidad: Matrícula
 
-## Entidad: Actividad Academica
+| Atributo          | Tipo          | Notas              |
+| ----------------- | ------------- | ------------------ |
+| `id_matricula`    | Número Entero | PK autoincremental |
+| `id_estudiante`   | Número Entero | FK → Estudiante    |
+| `id_grupo`        | Número Entero | FK → Grupo         |
+| `fecha_matricula` | Fecha/Hora    | Obligatorio        |
+| `estado`          | ENUM          | Obligatorio        |
 
-| Atributo            | Tipo          | Notas                |
-| ------------------- | ------------- | -------------------- |
-| `id_actividad`      | Numero Entero | [PK] autoincremental |
-| `id_grupo`          | Numero Entero | [FK - Grupo]         |
-| `titulo`            | Texto         | Obligatorio          |
-| `descripcion`       | Texto         | Opcional             |
-| `tipo`              | ENUM          | Obligatorio          |
-| `puntaje_maximo`    | Decimal       | Obligatorio          |
-| `porcentaje_aporte` | Decimal       | Obligatorio          |
-| `fecha_apertura`    | Fecha/Hora    | Obligatorio          |
-| `fecha_cierre`      | Fecha/Hora    | Obligatorio          |
-| `estado`            | ENUM          | Obligatorio          |
+**Valores de `estado`:**
 
-Valores de tipo: TAREA, PARCIAL, PROYECTO, EXAMEN.
+- `PENDIENTE`
+- `ACTIVA`
+- `CANCELADA`
+- `FINALIZADA`
 
-Valores de estado: BORRADOR, ABIERTA, CERRADA.
+**Restricción:**
 
-Regla: la suma de los porcentajes de aporte de las actividades de un grupo debe ser 100%.
+La combinación `id_estudiante + id_grupo` debe ser única.
 
+Además, el sistema controla que:
+
+- el grupo tenga cupos disponibles;
+- el período esté activo;
+- la materia esté activa;
+- el estudiante no supere el límite de créditos;
+- el estudiante no se matricule dos veces en la misma materia dentro del mismo período;
+- no existan traslapes de horarios;
+- el estudiante no tenga obligaciones financieras vencidas.
+
+---
+
+## Entidad: Actividad Académica
+
+| Atributo            | Tipo          | Notas              |
+| ------------------- | ------------- | ------------------ |
+| `id_actividad`      | Número Entero | PK autoincremental |
+| `id_grupo`          | Número Entero | FK → Grupo         |
+| `titulo`            | Texto         | Obligatorio        |
+| `descripcion`       | Texto         | Opcional           |
+| `tipo`              | ENUM          | Obligatorio        |
+| `puntaje_maximo`    | Decimal       | Obligatorio        |
+| `porcentaje_aporte` | Decimal       | Obligatorio        |
+| `fecha_apertura`    | Fecha/Hora    | Obligatorio        |
+| `fecha_cierre`      | Fecha/Hora    | Obligatorio        |
+| `estado`            | ENUM          | Obligatorio        |
+
+**Valores de `tipo`:**
+
+- `TAREA`
+- `PARCIAL`
+- `PROYECTO`
+- `EXAMEN`
+
+**Valores de `estado`:**
+
+- `BORRADOR`
+- `ABIERTA`
+- `CERRADA`
+
+**Regla:**
+
+La suma de los porcentajes de aporte de las actividades de un grupo debe ser 100%.
+
+---
 
 ## Entidad: Entrega
 
-| Atributo              | Tipo          | Notas                      |
-| --------------------- | ------------- | -------------------------- |
-| `id_entrega`          | Numero Entero | [PK] autoincremental       |
-| `id_actividad`        | Numero Entero | [FK - Actividad Academica] |
-| `id_matricula`        | Numero Entero | [FK - Matricula]           |
-| `fecha_entrega`       | Fecha/Hora    | Obligatorio                |
-| `archivo_url`         | Texto         | Opcional                   |
-| `respuesta_texto`     | Texto         | Opcional                   |
-| `puntaje_obtenido`    | Decimal       | Opcional                   |
-| `observacion_docente` | Texto         | Opcional                   |
-| `estado`              | ENUM          | Obligatorio                |
+| Atributo              | Tipo          | Notas                    |
+| --------------------- | ------------- | ------------------------ |
+| `id_entrega`          | Número Entero | PK autoincremental       |
+| `id_actividad`        | Número Entero | FK → Actividad Académica |
+| `id_matricula`        | Número Entero | FK → Matrícula           |
+| `fecha_entrega`       | Fecha/Hora    | Obligatorio              |
+| `archivo_url`         | Texto         | Opcional                 |
+| `respuesta_texto`     | Texto         | Opcional                 |
+| `puntaje_obtenido`    | Decimal       | Opcional                 |
+| `observacion_docente` | Texto         | Opcional                 |
+| `estado`              | ENUM          | Obligatorio              |
 
-Valores de estado: ENTREGADA, CALIFICADA.
+**Valores de `estado`:**
 
-Restriccion: un estudiante puede tener una unica entrega por actividad.
+- `ENTREGADA`
+- `CALIFICADA`
 
+**Restricción:**
 
-## Entidad: Obligacion Financiera
+Un estudiante puede tener una única entrega por actividad.
 
-| Atributo            | Tipo          | Notas                      |
-| ------------------- | ------------- | -------------------------- |
-| `id_obligacion`     | Numero Entero | [PK] autoincremental       |
-| `id_estudiante`     | Numero Entero | [FK - Estudiante]          |
-| `id_matricula`      | Numero Entero | [FK - Matricula], opcional |
-| `concepto`          | ENUM          | Obligatorio                |
-| `monto`             | Decimal       | Obligatorio                |
-| `fecha_emision`     | Fecha         | Obligatorio                |
-| `fecha_vencimiento` | Fecha         | Obligatorio                |
-| `estado`            | ENUM          | Obligatorio                |
+La combinación `id_actividad + id_matricula` debe ser única.
 
-id_estudiante sirve para obligaciones generales:
+---
 
-INSCRIPCION
-OTRO
+## Entidad: Obligación Financiera
 
-id_matricula permite relacionar una obligación con una matrícula concreta.
+| Atributo            | Tipo          | Notas                    |
+| ------------------- | ------------- | ------------------------ |
+| `id_obligacion`     | Número Entero | PK autoincremental       |
+| `id_estudiante`     | Número Entero | FK → Estudiante          |
+| `id_matricula`      | Número Entero | FK → Matrícula, opcional |
+| `concepto`          | ENUM          | Obligatorio              |
+| `monto`             | Decimal       | Obligatorio              |
+| `fecha_emision`     | Fecha         | Obligatorio              |
+| `fecha_vencimiento` | Fecha         | Obligatorio              |
+| `estado`            | ENUM          | Obligatorio              |
 
-Si id_matricula está informado, esa matrícula debe pertenecer al mismo id_estudiante.
-Una Obligación Financiera puede tener cero o muchos Pagos (1:N).
-Valores de concepto: INSCRIPCION, MENSUALIDAD, OTRO.
+**Valores de `concepto`:**
 
-Valores de estado: PENDIENTE, PAGADA, VENCIDA, CANCELADA.
+- `INSCRIPCION`
+- `MENSUALIDAD`
+- `OTRO`
+
+**Valores de `estado`:**
+
+- `PENDIENTE`
+- `PAGADA`
+- `VENCIDA`
+- `CANCELADA`
+
+**Consideraciones:**
+
+- `id_estudiante` permite asociar obligaciones generales al estudiante.
+- `id_matricula` permite asociar una obligación con una matrícula concreta.
+- Si `id_matricula` está informado, la matrícula debe pertenecer al mismo estudiante.
+- Una obligación financiera puede tener cero o varios pagos.
+
+---
 
 ## Entidad: Pago
 
-| Atributo                 | Tipo          | Notas                        |
-| ------------------------ | ------------- | ---------------------------- |
-| `id_pago`                | Numero Entero | [PK] autoincremental         |
-| `id_obligacion`          | Numero Entero | [FK - Obligacion Financiera] |
-| `id_usuario_verificador` | Numero Entero | [FK - Usuario], opcional     |
-| `monto`                  | Decimal       | Obligatorio                  |
-| `fecha_pago`             | Fecha/Hora    | Obligatorio                  |
-| `metodo`                 | ENUM          | Obligatorio                  |
-| `estado`                 | ENUM          | Obligatorio                  |
-| `fecha_validacion`       | Fecha/Hora    | Opcional                     |
-| `observacion`            | Texto         | Opcional                     |
+| Atributo                 | Tipo          | Notas                      |
+| ------------------------ | ------------- | -------------------------- |
+| `id_pago`                | Número Entero | PK autoincremental         |
+| `id_obligacion`          | Número Entero | FK → Obligación Financiera |
+| `id_usuario_verificador` | Número Entero | FK → Usuario, opcional     |
+| `monto`                  | Decimal       | Obligatorio                |
+| `fecha_pago`             | Fecha/Hora    | Obligatorio                |
+| `metodo`                 | ENUM          | Obligatorio                |
+| `estado`                 | ENUM          | Obligatorio                |
+| `fecha_validacion`       | Fecha/Hora    | Opcional                   |
+| `observacion`            | Texto         | Opcional                   |
+| `id_mockpay`             | Texto         | Opcional, único            |
+| `checkout_url`           | Texto         | Opcional                   |
 
-Valores de metodo: EFECTIVO, TRANSFERENCIA, PASARELA.
+**Valores de `metodo`:**
 
-Valores de estado: PENDIENTE, APROBADO, RECHAZADO.
-id_usuario_verificador
+- `EFECTIVO`
+- `TRANSFERENCIA`
+- `PASARELA`
 
+**Valores de `estado`:**
 
-## Entidad: Auditoria
+- `PENDIENTE`
+- `APROBADO`
+- `RECHAZADO`
 
-| Atributo         | Tipo          | Notas                |
-| ---------------- | ------------- | -------------------- |
-| `id_auditoria`   | Numero Entero | [PK] autoincremental |
-| `id_usuario`     | Numero Entero | [FK - Usuario]       |
-| `entidad`        | Texto         | Obligatorio          |
-| `id_registro`    | Numero Entero | Obligatorio          |
-| `accion`         | Texto         | Obligatorio          |
-| `valor_anterior` | JSON          | Opcional             |
-| `valor_nuevo`    | JSON          | Opcional             |
-| `fecha`          | Fecha/Hora    | Obligatorio          |
-| `detalle`        | Texto         | Opcional             |
+### Integración con MockPay
 
+Cuando el método es `PASARELA`, el sistema:
 
-## Relaciones
+1. Registra el pago localmente en estado `PENDIENTE`.
+2. Envía una intención de pago a MockPay.
+3. Guarda el identificador de transacción en `id_mockpay`.
+4. Guarda la URL de checkout en `checkout_url`.
+5. El estudiante realiza el pago en MockPay.
+6. MockPay notifica el resultado mediante un webhook.
+7. El webhook actualiza el pago a `APROBADO` o `RECHAZADO`.
 
-Un Usuario puede estar asociado a cero o un Estudiante (1:0..1).
-Un Usuario puede estar asociado a cero o un Profesor (1:0..1).
-Un Tutor puede estar asociado a muchos Estudiantes, pero cada estudiante tiene un tutor (1:N).
-Una Materia puede tener muchos Grupos, pero cada grupo pertenece a una materia (1:N).
-Un Periodo puede tener muchos Grupos, pero cada grupo pertenece a un periodo (1:N).
-Un Profesor puede estar asignado a muchos Grupos, pero cada grupo tiene un profesor (1:N).
-Un Aula puede ser utilizada por muchos Grupos, pero cada grupo tiene un aula (1:N).
-Un Grupo puede tener muchos Horarios (1:N).
-Un Estudiante puede tener muchas Matriculas y un Grupo puede tener muchos estudiantes mediante Matricula (N:M).
-Un Grupo puede tener muchas Actividades Academicas (1:N).
-Una Actividad Académica puede tener cero o muchas Entregas.(1:N).
-Una Matricula puede tener muchas Entregas (1:N).
-Un Estudiante puede tener muchas Obligaciones Financieras (1:N).
-Una Obligacion Financiera puede tener CERO o varios Pagos (1:N).
-Un Usuario puede verificar muchos Pagos (1:N).
-Un Usuario puede generar muchos registros de Auditoria (1:N).
+Para pagos manuales mediante `EFECTIVO` o `TRANSFERENCIA`, el pago puede ser validado por un usuario autorizado de Recepción.
 
-1FN: cumple porque...
+`id_usuario_verificador` identifica al usuario que realizó la validación manual.
 
-Cada atributo contiene valores atómicos y no se almacenan listas de valores dentro de una misma columna. Por ejemplo, los nombres están separados en atributos individuales y los horarios se registran como registros independientes en HORARIO.
+---
 
-2FN: cumple porque...
+## Entidad: Auditoría
 
-Los atributos no clave dependen completamente de la clave primaria de su entidad. Se utilizan claves primarias simples y, cuando existe una relación que podría generar duplicados, se establecen restricciones UNIQUE, como (id_estudiante, id_grupo) en MATRICULA y (id_actividad, id_matricula) en ENTREGA.
+| Atributo         | Tipo          | Notas              |
+| ---------------- | ------------- | ------------------ |
+| `id_auditoria`   | Número Entero | PK autoincremental |
+| `id_usuario`     | Número Entero | FK → Usuario       |
+| `entidad`        | Texto         | Obligatorio        |
+| `id_registro`    | Número Entero | Obligatorio        |
+| `accion`         | Texto         | Obligatorio        |
+| `valor_anterior` | JSON          | Opcional           |
+| `valor_nuevo`    | JSON          | Opcional           |
+| `fecha`          | Fecha/Hora    | Obligatorio        |
+| `detalle`        | Texto         | Opcional           |
 
-3FN: cumple porque...
+La auditoría permite registrar acciones relevantes realizadas sobre los datos del sistema.
 
-Los atributos no clave dependen directamente de la clave primaria y se evita almacenar información que pertenece a otra entidad. Por ejemplo, los datos personales del estudiante y profesor se mantienen en USUARIO, mientras que ESTUDIANTE y PROFESOR contienen únicamente información específica de cada perfil. De igual forma, los datos de la materia no se repiten en GRUPO, sino que se referencian mediante id_materia.
+---
 
-## Justificación de las entidades
+# Relaciones
 
-| Entidad                  | ¿Por qué existe?                                                                                                       |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| **Usuario**              | Centraliza los datos de autenticación, identidad, rol y estado de las personas que utilizan el sistema.                |
-| **Estudiante**           | Representa la información académica específica de un estudiante y su vínculo con un usuario y tutor.                   |
-| **Profesor**             | Representa la información laboral y académica específica de los profesores.                                            |
-| **Tutor**                | Almacena los datos de contacto del responsable o referente del estudiante sin convertirlo en usuario del sistema.      |
-| **Periodo**              | Define los períodos académicos en los que se organizan las actividades educativas.                                     |
-| **Materia**              | Contiene la información académica y los costos asociados a cada materia.                                               |
-| **Aula**                 | Permite registrar los espacios físicos o virtuales disponibles para los grupos.                                        |
-| **Grupo**                | Representa una instancia concreta de una materia dentro de un período, profesor y aula determinados.                   |
-| **Horario**              | Permite definir los días y horarios en los que funciona cada grupo.                                                    |
-| **Matricula**            | Registra la inscripción de un estudiante a un grupo y resuelve la relación muchos a muchos entre estudiantes y grupos. |
-| **ActividadAcademica**   | Representa las actividades mediante las cuales se evalúa el desempeño de los estudiantes.                              |
-| **Entrega**              | Registra la entrega de un estudiante para una actividad y permite almacenar su resultado y observaciones.              |
-| **ObligacionFinanciera** | Registra los importes que un estudiante debe abonar por conceptos académicos o administrativos.                        |
-| **Pago**                 | Registra los pagos realizados sobre las obligaciones financieras y su estado de validación.                            |
-| **Auditoria**            | Permite conservar un historial de acciones y cambios relevantes realizados por los usuarios.                           |
+| #   | Entidad origen        | Entidad destino       | Cardinalidad | Descripción                                                                     |
+| --- | --------------------- | --------------------- | ------------ | ------------------------------------------------------------------------------- |
+| 1   | Usuario               | Estudiante            | 1 : 0..1     | Un usuario puede estar asociado a cero o un estudiante.                         |
+| 2   | Usuario               | Profesor              | 1 : 0..1     | Un usuario puede estar asociado a cero o un profesor.                           |
+| 3   | Tutor                 | Estudiante            | 1 : N        | Un tutor puede tener muchos estudiantes; cada estudiante tiene un tutor.        |
+| 4   | Materia               | Grupo                 | 1 : N        | Una materia puede tener muchos grupos; cada grupo pertenece a una materia.      |
+| 5   | Periodo               | Grupo                 | 1 : N        | Un período puede tener muchos grupos; cada grupo pertenece a un período.        |
+| 6   | Profesor              | Grupo                 | 1 : N        | Un profesor puede estar asignado a muchos grupos; cada grupo tiene un profesor. |
+| 7   | Aula                  | Grupo                 | 1 : N        | Un aula puede ser utilizada por muchos grupos; cada grupo tiene un aula.        |
+| 8   | Grupo                 | Horario               | 1 : N        | Un grupo puede tener muchos horarios.                                           |
+| 9   | Estudiante            | Grupo                 | N : M        | Se resuelve mediante la entidad Matrícula.                                      |
+| 10  | Grupo                 | Actividad Académica   | 1 : N        | Un grupo puede tener muchas actividades académicas.                             |
+| 11  | Actividad Académica   | Entrega               | 1 : N        | Una actividad puede tener cero o muchas entregas.                               |
+| 12  | Matrícula             | Entrega               | 1 : N        | Una matrícula puede tener muchas entregas.                                      |
+| 13  | Estudiante            | Obligación Financiera | 1 : N        | Un estudiante puede tener muchas obligaciones financieras.                      |
+| 14  | Obligación Financiera | Pago                  | 1 : N        | Una obligación puede tener cero o varios pagos.                                 |
+| 15  | Usuario               | Pago                  | 1 : N        | Un usuario puede verificar muchos pagos.                                        |
+| 16  | Usuario               | Auditoría             | 1 : N        | Un usuario puede generar muchos registros de auditoría.                         |
+
+---
+
+# Normalización
+
+## Primera Forma Normal — 1FN
+
+El modelo cumple con la primera forma normal porque cada atributo contiene valores atómicos y no se almacenan listas de valores dentro de una misma columna.
+
+Por ejemplo:
+
+- los nombres se almacenan en atributos individuales;
+- los horarios se almacenan como registros independientes;
+- las materias, grupos y actividades se representan mediante entidades separadas.
+
+---
+
+## Segunda Forma Normal — 2FN
+
+El modelo cumple con la segunda forma normal porque los atributos no clave dependen completamente de la clave primaria de su entidad.
+
+Se utilizan claves primarias simples y restricciones únicas para evitar duplicados en relaciones importantes.
+
+Ejemplos:
+
+- `id_estudiante + id_grupo` en Matrícula;
+- `id_actividad + id_matricula` en Entrega.
+
+---
+
+## Tercera Forma Normal — 3FN
+
+El modelo cumple con la tercera forma normal porque los atributos no clave dependen directamente de la clave primaria y se evita almacenar información que pertenece a otra entidad.
+
+Por ejemplo:
+
+- los datos personales se almacenan en Usuario;
+- Estudiante y Profesor almacenan únicamente información específica de cada perfil;
+- los datos de una Materia no se repiten en Grupo;
+- la información del Profesor no se repite en Grupo;
+- la información de la Obligación Financiera no se repite en Pago.
+
+Las relaciones se representan mediante claves foráneas.
+
+---
+
+# Reglas principales de negocio
+
+## Usuarios
+
+- Existen cuatro roles: `ADMIN`, `RECEPCIONISTA`, `PROFESOR` y `ESTUDIANTE`.
+- Los estudiantes pueden registrarse como postulantes.
+- Los usuarios administrativos, recepcionistas y profesores son creados por un administrador.
+- Un usuario pendiente no puede iniciar sesión.
+- Recepción puede aprobar un postulante una vez verificado su pago de matrícula.
+- Los usuarios pueden quedar suspendidos por obligaciones financieras vencidas.
+
+## Matrículas
+
+El sistema impide una matrícula cuando:
+
+- el grupo no está abierto;
+- el período no está activo;
+- la materia no está activa;
+- el grupo alcanzó su cupo máximo;
+- el estudiante ya está matriculado en el grupo;
+- el estudiante ya está matriculado en otra sección de la misma materia durante el período;
+- se supera el límite de créditos;
+- existe un traslape de horarios;
+- el estudiante posee una obligación financiera vencida.
+
+## Actividades y entregas
+
+- Los docentes pueden crear actividades para sus grupos.
+- Las actividades tienen fecha de apertura y cierre.
+- Los estudiantes pueden realizar entregas correspondientes a sus matrículas.
+- Una matrícula no puede tener más de una entrega para una misma actividad.
+- Los docentes pueden registrar la calificación obtenida.
+
+## Pagos
+
+- Los pagos pueden realizarse mediante efectivo, transferencia o pasarela.
+- Los pagos comienzan en estado `PENDIENTE`.
+- Los pagos manuales pueden ser aprobados o rechazados por Recepción.
+- Los pagos realizados mediante MockPay se actualizan mediante webhook.
+- Un pago aprobado puede provocar que una obligación pase a estado `PAGADA`.
+- Las transacciones de MockPay se identifican mediante `id_mockpay`.
+
+---
+
+# Tecnologías
+
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Passport / JWT
+- Swagger / OpenAPI
+- class-validator
+- MockPay
+- Render
+- Supabase
+
+---
+
+# Entregables
+
+El proyecto incluye:
+
+- API REST desarrollada con NestJS.
+- Base de datos relacional PostgreSQL.
+- Modelo de datos normalizado.
+- DER con las entidades y relaciones.
+- Autenticación mediante JWT.
+- Autorización basada en roles.
+- Validación de DTOs.
+- Manejo de errores HTTP.
+- Documentación mediante Swagger.
+- Seed de datos para pruebas.
+- Migraciones de Prisma.
+- Integración con MockPay.
+- Despliegue de la API en Render.
+- Base de datos PostgreSQL gestionada mediante Supabase.

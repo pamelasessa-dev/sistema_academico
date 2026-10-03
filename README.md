@@ -1,124 +1,847 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# SGAF — Sistema de Gestión Académica y Financiera
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST desarrollada con NestJS para la gestión de procesos académicos, administrativos y financieros de una institución educativa.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+El sistema permite administrar usuarios, estudiantes, profesores, períodos, materias, grupos, aulas, horarios, matrículas, actividades académicas, entregas, obligaciones financieras y pagos.
 
-## Description
+La aplicación cuenta con autenticación mediante JWT, autorización basada en roles, validaciones, auditoría, documentación mediante Swagger/OpenAPI, persistencia en PostgreSQL e integración con la pasarela de pagos simulada MockPay.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+#  Descripción del proyecto
 
-```bash
-$ pnpm install
-```
+El **Sistema de Gestión Académica y Financiera (SGAF)** centraliza diferentes procesos de una institución educativa en una API REST.
 
-## Compile and run the project
+El sistema contempla tres áreas principales:
 
-```bash
-# development
-$ pnpm run start
+### Área de identidad y usuarios
 
-# watch mode
-$ pnpm run start:dev
+- Registro de estudiantes.
+- Autenticación.
+- Gestión de usuarios.
+- Roles y permisos.
+- Estados de usuario.
+- Aprobación de postulantes.
 
-# production mode
-$ pnpm run start:prod
-```
+### Área académica
 
-## Run tests
+- Gestión de períodos.
+- Gestión de materias.
+- Gestión de grupos.
+- Gestión de profesores.
+- Gestión de aulas.
+- Gestión de horarios.
+- Matrículas.
+- Actividades académicas.
+- Entregas y calificaciones.
 
-```bash
-# unit tests
-$ pnpm run test
+### Área financiera
 
-# e2e tests
-$ pnpm run test:e2e
+- Obligaciones financieras.
+- Registro de pagos.
+- Aprobación y rechazo de pagos manuales.
+- Integración con MockPay.
+- Webhooks de pagos.
+- Actualización automática del estado de los pagos.
+- Auditoría de operaciones relevantes.
 
-# test coverage
-$ pnpm run test:cov
-```
+---
 
-## Deployment
+#  Objetivos
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Objetivo general
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Desarrollar una API REST que permita gestionar de forma integrada los procesos académicos, administrativos y financieros de una institución educativa.
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+## Objetivos específicos
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- Implementar una API REST utilizando NestJS.
+- Diseñar una base de datos relacional en PostgreSQL.
+- Aplicar Prisma ORM para el acceso a datos.
+- Implementar autenticación mediante JWT.
+- Implementar autorización mediante roles.
+- Aplicar validaciones de entrada.
+- Implementar reglas de negocio para las matrículas.
+- Gestionar actividades y entregas académicas.
+- Gestionar obligaciones y pagos.
+- Integrar una pasarela de pagos simulada.
+- Implementar un webhook para recibir notificaciones de pagos.
+- Documentar la API mediante Swagger/OpenAPI.
+- Desplegar la aplicación en Render.
+- Utilizar Supabase como proveedor de PostgreSQL en producción.
+- Implementar migraciones y seed de datos.
+- Mantener una estructura organizada y versionada mediante Git.
 
-## Observability
+---
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+##  Funcionalidades principales
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+## Usuarios
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+El sistema maneja los siguientes roles:
 
-To add it to this project:
+- ADMIN
+- RECEPCIONISTA
+- PROFESOR
+- ESTUDIANTE
 
-```bash
-$ pnpm install @nestjs/observe
-```
+Estados de usuario:
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+- PENDIENTE
+- ACTIVO
+- SUSPENDIDO
+- INACTIVO
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+Los estudiantes pueden registrarse como postulantes y permanecer en estado pendiente hasta que se complete el proceso correspondiente de aprobación.
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## Gestión académica
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+El sistema permite administrar:
 
-## Support
+- Estudiantes.
+- Profesores.
+- Tutores.
+- Períodos académicos.
+- Materias.
+- Aulas.
+- Grupos.
+- Horarios.
+- Matrículas.
+- Actividades académicas.
+- Entregas.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## Gestión financiera
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+El sistema permite:
 
-## License
+- Crear obligaciones financieras.
+- Consultar obligaciones.
+- Registrar pagos.
+- Consultar pagos.
+- Aprobar pagos manualmente.
+- Rechazar pagos manualmente.
+- Registrar observaciones.
+- Integrar pagos mediante MockPay.
+- Procesar webhooks.
+- Actualizar automáticamente pagos de pasarela.
+- Marcar obligaciones como pagadas cuando corresponde.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+# Tecnologías utilizadas
+
+| Tecnología        | Uso                        |
+|-------------------|----------------------------|
+| NestJS            | Framework backend          |
+| TypeScript        | Lenguaje                   |
+| Prisma            | ORM                        |
+| PostgreSQL        | Base de datos              |
+| Passport          | Autenticación              |
+| JWT               | Tokens de autenticación    |
+| class-validator   | Validación de DTOs         |
+| Swagger / OpenAPI | Documentación de API       |
+| MockPay           | Pasarela de pagos simulada |
+| Supabase          | PostgreSQL en producción   |
+| Render            | Despliegue de la API       |
+| pnpm              | Gestor de paquetes         |
+| Git / GitHub      | Control de versiones       |
+
+---
+
+#  Arquitectura del proyecto
+
+La aplicación utiliza una arquitectura modular basada en NestJS.
+
+Cada módulo contiene las responsabilidades correspondientes a una determinada área del sistema.
+
+De forma general:
+
+
+Cliente
+   │
+   ▼
+Controller
+   │
+   ▼
+Service
+   │
+   ▼
+PrismaService
+   │
+   ▼
+PostgreSQL
+
+
+# Para operaciones protegidas
+
+Cliente
+   │
+   ▼
+JWT
+   │
+   ▼
+Guards
+   │
+   ▼
+Controller
+   │
+   ▼
+Service
+   │
+   ▼
+Prisma
+   │
+   ▼
+PostgreSQL
+
+## Requisitos previos
+
+Para ejecutar el proyecto localmente se necesita:
+
+Node.js
+pnpm
+PostgreSQL
+Git
+
+## Instalación
+
+Clonar el repositorio:
+
+git clone https://github.com/pamelasessa-dev/sistema_academico.git
+
+
+Ingresar al proyecto:
+
+cd sistema_academico
+
+Instalar las dependencias:
+
+pnpm install
+
+
+## Variables de entorno
+
+Crear un archivo .env en la raíz del proyecto.
+
+# .env.example
+
+El archivo .env no debe versionarse. Se incluye únicamente .env.example como referencia de las variables necesarias.
+
+## Base de datos
+
+El proyecto utiliza PostgreSQL como sistema gestor de base de datos.
+
+En producción la base de datos se encuentra gestionada mediante Supabase.
+
+Prisma se utiliza como ORM para:
+
+Definir el modelo de datos.
+Generar el cliente.
+Ejecutar consultas.
+Crear migraciones.
+Gestionar relaciones.
+Ejecutar el seed.
+
+## Schema Prisma
+
+El modelo se encuentra en:
+
+prisma/schema.prisma
+
+# Migraciones
+
+Las migraciones se encuentran en:
+
+prisma/migrations/
+
+Para generar el cliente Prisma:
+
+pnpm prisma generate --config prisma7.config.ts
+
+Para aplicar migraciones:
+
+pnpm prisma migrate deploy --config prisma7.config.ts
+
+# Seed
+
+El proyecto incluye un seed con datos iniciales para realizar las pruebas.
+
+El seed se encuentra en:
+
+prisma/seed.ts
+
+Incluye usuarios de prueba, información académica y datos financieros necesarios para ejecutar los principales flujos del sistema.
+
+
+## Modelo de datos
+
+El sistema utiliza un modelo relacional normalizado.
+
+Las principales entidades son:
+
+Usuario
+Estudiante
+Profesor
+Tutor
+Periodo
+Materia
+Aula
+Grupo
+Horario
+Matrícula
+Actividad Académica
+Entrega
+Obligación Financiera
+Pago
+Auditoría
+
+La descripción detallada de cada entidad, sus atributos, relaciones, restricciones y reglas de normalización se encuentra en:
+
+requerimientos.md
+
+##  Diagrama Entidad-Relación
+
+El proyecto incluye un Diagrama Entidad-Relación generado a partir de la estructura de la base de datos.
+
+Archivo:
+
+DER/der-sgaf.png
+
+El modelo contiene las entidades académicas, administrativas y financieras, junto con sus claves primarias, claves foráneas y relaciones.
+
+## Autenticación
+
+La API utiliza autenticación mediante JWT.
+
+El usuario inicia sesión y obtiene un token.
+
+Las solicitudes protegidas deben incluir:
+
+Authorization: Bearer <token>
+
+El token permite identificar al usuario autenticado y aplicar las restricciones correspondientes.
+
+
+## Autorización y roles
+
+El sistema utiliza autorización basada en roles.
+
+ADMIN
+
+Responsable de las operaciones administrativas generales del sistema.
+
+RECEPCIONISTA
+
+Responsable de operaciones administrativas y financieras que requieren validación.
+
+PROFESOR
+
+Responsable de las operaciones académicas correspondientes a sus grupos.
+
+ESTUDIANTE
+
+Puede consultar y gestionar la información correspondiente a su perfil, matrículas, actividades, entregas y obligaciones.
+
+Los permisos se aplican mediante guards y decoradores de roles.
+
+
+## Módulos de la API
+
+La API se encuentra organizada en módulos de NestJS.
+
+Entre ellos:
+
+Autenticación
+Usuarios
+Estudiantes
+Profesores
+Tutores
+Períodos
+Materias
+Aulas
+Grupos
+Horarios
+Matrículas
+Actividades
+Entregas
+Obligaciones
+Pagos
+Auditoría
+
+La lista completa de endpoints, parámetros, DTOs y respuestas se encuentra disponible en Swagger.
+
+##  Reglas de negocio
+
+
+# Matrículas
+
+Antes de realizar una matrícula se valida:
+
+que el estudiante pueda matricularse;
+que el grupo exista;
+que el grupo esté abierto;
+que el período esté activo;
+que la materia esté activa;
+que existan cupos;
+que no exista una matrícula duplicada;
+que el estudiante no esté matriculado en otra sección de la misma materia durante el período;
+que no se supere el límite de créditos;
+que no exista un traslape de horarios;
+que no existan obligaciones financieras vencidas.
+
+# Actividades
+
+Las actividades pertenecen a un grupo.
+
+Cada actividad posee:
+
+título;
+descripción;
+tipo;
+puntaje máximo;
+porcentaje de aporte;
+fecha de apertura;
+fecha de cierre;
+estado.
+
+La suma de los porcentajes de las actividades de un grupo debe representar el 100% de la evaluación.
+
+# Entregas
+
+Una matrícula puede realizar una única entrega para una determinada actividad.
+
+Se aplica la restricción:
+
+UNIQUE(id_actividad, id_matricula)
+
+Las entregas pueden ser calificadas por el docente correspondiente.
+
+## Gestión financiera
+
+Las obligaciones financieras pueden corresponder a:
+
+INSCRIPCION
+MENSUALIDAD
+OTRO
+
+Estados:
+
+PENDIENTE
+PAGADA
+VENCIDA
+CANCELADA
+
+Los pagos pueden realizarse mediante:
+
+EFECTIVO
+TRANSFERENCIA
+PASARELA
+
+Estados de pago:
+
+PENDIENTE
+APROBADO
+RECHAZADO
+
+
+## Integración con MockPay
+
+El proyecto integra MockPay como pasarela de pagos simulada.
+
+La API utilizada es:
+
+https://api-mock-payment.funvaltech.cloud
+
+El backend realiza una solicitud:
+
+POST /api/v1/payments
+
+enviando:
+
+monto;
+moneda;
+metadata.
+
+MockPay devuelve:
+
+identificador de transacción;
+URL de checkout.
+
+Estos datos se almacenan en:
+
+id_mockpay
+checkout_url
+
+
+## Flujo de pago
+
+
+ESTUDIANTE
+    │
+    ▼
+POST /pagos
+    │
+    ▼
+SGAF crea Pago PENDIENTE
+    │
+    ▼
+MockPay
+    │
+    ▼
+checkout_url
+    │
+    ▼
+ESTUDIANTE REALIZA EL PAGO
+    │
+    ▼
+MockPay procesa el pago
+    │
+    ▼
+WEBHOOK
+    │
+    ▼
+POST /pagos/webhook
+    │
+    ├── payment.succeeded
+    │          │
+    │          ▼
+    │      APROBADO
+    │
+    └── payment.failed
+               │
+               ▼
+           RECHAZADO
+
+
+## Webhook
+
+El webhook público del proyecto es:
+
+https://sistema-academico-avh7.onrender.com/pagos/webhook
+
+Los eventos procesados son:
+
+payment.succeeded
+payment.failed
+
+Cuando llega payment.succeeded:
+
+PENDIENTE → APROBADO
+
+Cuando llega payment.failed:
+
+PENDIENTE → RECHAZADO
+
+Si el total de pagos aprobados alcanza el monto de la obligación, la obligación pasa a:
+
+PAGADA
+
+## Auditoría
+
+El sistema incluye una entidad de auditoría para registrar operaciones relevantes.
+
+Los registros pueden incluir:
+
+usuario que realizó la operación;
+entidad afectada;
+identificador del registro;
+acción;
+valor anterior;
+valor nuevo;
+fecha;
+detalle.
+
+Esto permite mantener un historial de determinadas operaciones del sistema.
+
+## Validaciones
+
+La API utiliza DTOs y class-validator para validar los datos recibidos.
+
+Entre las validaciones se encuentran:
+
+campos obligatorios;
+tipos de datos;
+formatos;
+valores permitidos;
+identificadores;
+relaciones entre entidades;
+reglas específicas de negocio.
+
+Las validaciones de negocio se realizan en los servicios correspondientes.
+
+## Manejo de errores
+
+La API utiliza códigos HTTP apropiados según el resultado de cada operación.
+
+Ejemplos:
+
+200 OK
+201 Created
+400 Bad Request
+401 Unauthorized
+403 Forbidden
+404 Not Found
+500 Internal Server Error
+
+Ejemplo de recurso inexistente:
+
+{
+  "message": "El pago no existe",
+  "error": "Not Found",
+  "statusCode": 404
+}
+
+Ejemplo de acceso no autorizado:
+
+{
+  "message": "No tienes permisos para realizar esta acción",
+  "error": "Forbidden",
+  "statusCode": 403
+}
+
+## Swagger / OpenAPI
+
+La API está documentada mediante Swagger/OpenAPI.
+
+Producción
+https://sistema-academico-avh7.onrender.com/api
+Local
+http://localhost:3000/api
+
+Swagger permite:
+
+consultar endpoints;
+consultar DTOs;
+consultar parámetros;
+consultar respuestas;
+probar operaciones;
+utilizar autenticación JWT;
+visualizar los esquemas de datos.
+
+
+## Pruebas principales
+
+Durante el desarrollo se probaron los principales flujos de la API.
+
+Autenticación
+Login exitoso.
+Credenciales incorrectas.
+Usuario inexistente.
+Acceso sin token.
+Acceso con rol no autorizado.
+Grupos
+Listado de grupos.
+Consulta de grupo existente.
+Consulta de grupo inexistente.
+Matrículas
+Creación de matrícula.
+Validación de cupos.
+Validación de período.
+Validación de materia.
+Validación de créditos.
+Validación de horarios.
+Validación de obligaciones vencidas.
+Actividades
+Creación.
+Consulta.
+Entrega.
+Validación de permisos.
+Calificación.
+Pagos
+Consulta de pagos.
+Consulta de pago por ID.
+Creación de pago.
+Aprobación manual.
+Rechazo manual.
+Creación mediante MockPay.
+Obtención del checkout.
+Procesamiento del webhook.
+Actualización automática a APROBADO.
+Actualización automática a RECHAZADO.
+
+
+## Credenciales de prueba
+
+Rol	           |  Email	                               |   Contraseña
+---------------|---------------------------------------|----------------------
+ADMIN	         | admin@sistemaacademico.com	           |    Admin123
+RECEPCIONISTA	 | recepcionista@sistemaacademico.com	   |    Recepcionista123
+PROFESOR	     | profesor@sistemaacademico.com	       |    Profesor123
+ESTUDIANTE	   | estudiante@sistemaacademico.com	     |    Estudiante123
+
+Estas credenciales corresponden al seed utilizado para las pruebas del proyecto.
+
+## Ejecución local
+
+# Instalar dependencias:
+
+pnpm install
+
+# Generar Prisma:
+
+pnpm prisma generate --config prisma7.config.ts
+
+# Aplicar migraciones:
+
+pnpm prisma migrate deploy --config prisma7.config.ts
+
+# Ejecutar el proyecto:
+
+pnpm run start:dev
+
+# La API estará disponible en:
+
+http://localhost:3000
+
+# Swagger:
+
+http://localhost:3000/api
+
+## Despliegue
+
+La aplicación se encuentra desplegada en Render.
+
+API
+
+https://sistema-academico-avh7.onrender.com
+
+Swagger
+
+https://sistema-academico-avh7.onrender.com/api
+
+Base de datos
+
+La base de datos PostgreSQL de producción se encuentra gestionada mediante Supabase.
+
+## Configuración de Render
+
+El proyecto utiliza variables de entorno configuradas en Render.
+
+La construcción de la aplicación utiliza:
+
+pnpm install && pnpm prisma generate --config prisma7.config.ts && pnpm run build
+
+Las variables sensibles no se almacenan en el repositorio.
+
+## Base de datos en producción
+
+La base de datos de producción utiliza PostgreSQL administrado mediante Supabase.
+
+El despliegue contempla:
+
+conexión mediante DATABASE_URL;
+generación del cliente Prisma;
+migraciones;
+seed de datos;
+persistencia de la información de la aplicación.
+
+## Seed en producción
+
+El proyecto dispone de datos iniciales para facilitar la demostración y pruebas.
+
+El seed permite disponer de:
+
+usuarios;
+estudiantes;
+profesores;
+períodos;
+materias;
+grupos;
+matrículas;
+obligaciones financieras;
+pagos;
+demás datos necesarios para ejecutar los flujos principales.
+
+## Flujo de demostración
+
+El flujo recomendado para la demostración final es:
+
+1. Registrar / consultar usuario
+          ↓
+2. Autenticarse
+          ↓
+3. Obtener JWT
+          ↓
+4. Realizar proceso de aprobación
+          ↓
+5. Consultar períodos y grupos
+          ↓
+6. Realizar matrícula
+          ↓
+7. Consultar información académica
+          ↓
+8. Crear / consultar actividad
+          ↓
+9. Realizar entrega
+          ↓
+10. Registrar / consultar obligación financiera
+          ↓
+11. Crear pago
+          ↓
+12. Realizar pago mediante MockPay
+          ↓
+13. Recibir webhook
+          ↓
+14. Confirmar pago APROBADO
+          ↓
+15. Consultar historial financiero
+
+Este flujo permite demostrar la integración entre los módulos principales de la aplicación.
+
+## Seguridad
+
+Se aplican medidas básicas de seguridad:
+
+autenticación mediante JWT;
+autorización mediante roles;
+validación de DTOs;
+variables de entorno para secretos;
+claves privadas fuera del repositorio;
+control de acceso mediante guards;
+validación de relaciones entre entidades.
+
+El archivo .env está excluido del control de versiones.
+
+## Control de versiones
+
+El proyecto utiliza Git y GitHub para controlar los cambios.
+
+Las funcionalidades se desarrollan mediante ramas específicas antes de integrarse a la rama principal.
+
+Ejemplo:
+
+main
+│
+├── feature/finanzas
+├── feature/matriculas
+├── feature/modulos-api
+├── feature/identidad-autenticacion
+└── feature/documentacion-final
+
+## Documentación adicional
+
+El archivo:
+
+requerimientos.md
+
+contiene la documentación detallada del modelo de datos, incluyendo:
+
+entidades;
+atributos;
+claves primarias;
+claves foráneas;
+relaciones;
+restricciones;
+reglas de normalización;
+reglas de negocio.
+
+## El archivo:
+
+DER/der-sgaf.png
+
+contiene el Diagrama Entidad-Relación del sistema.
+
