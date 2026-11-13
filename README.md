@@ -268,14 +268,32 @@ pnpm prisma migrate deploy --config prisma7.config.ts
 
 # Seed
 
-El proyecto incluye un seed con datos iniciales para realizar las pruebas.
+### Cargar datos iniciales (Seed)
 
-El seed se encuentra en:
+Una vez configuradas las variables de entorno y aplicadas las migraciones, se pueden cargar los datos iniciales y usuarios de prueba ejecutando:
 
-prisma/seed.ts
+```bash
+pnpm prisma db seed --config prisma7.config.ts
+```
 
-Incluye usuarios de prueba, información académica y datos financieros necesarios para ejecutar los principales flujos del sistema.
+Los datos iniciales están definidos en `prisma/seed.ts`.
 
+El seed es idempotente: busca los registros de prueba existentes y los actualiza, o los crea si todavía no existen. 
+Esto permite ejecutarlo nuevamente sin generar duplicados en condiciones normales de ejecución secuencial.
+
+**Usuarios de prueba:**
+
+| Rol              | Correo                             | Contraseña       |
+|------------------|------------------------------------|------------------|
+| Administrador    | admin@sistemaacademico.com         | Admin123         |
+| Recepcionista    | recepcionista@sistemaacademico.com | Recepcionista123 |
+| Profesor         | profesor@sistemaacademico.com      | Profesor123      |
+| Estudiante       | estudiante@sistemaacademico.com    | Estudiante123    |
+| Estudiante 2     | estudiante2@sistemaacademico.com   | Estudiante123    |
+
+**Importante:** ejecutar el seed únicamente en entornos locales o de prueba. 
+No utilizarlo sobre una base de datos de producción, ya que crea y actualiza usuarios y registros académicos de demostración. 
+Al volver a ejecutarlo, también restablece los datos y contraseñas de esos registros de prueba.
 
 ## Modelo de datos
 
