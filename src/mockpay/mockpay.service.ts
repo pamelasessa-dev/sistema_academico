@@ -12,14 +12,14 @@ import { MockPayWebhookDto } from './dto/mockpay-webhook.dto.js';
 @Injectable()
 export class MockPayService {
   private readonly baseUrl =
-    process.env.MOCKPAY_BASE_URL ??
-    'https://mockpay-backend.onrender.com';
+    process.env.MOCKPAY_BASE_URL ?? 'https://mockpay-backend.onrender.com';
+
+  private readonly checkoutBaseUrl =
+    process.env.MOCKPAY_CHECKOUT_BASE_URL?.replace(/\/+$/, '');
 
   private readonly secretKey = process.env.MOCKPAY_SECRET_KEY;
 
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async crearIntencionPago(data: {
     amount: number;
@@ -32,21 +32,18 @@ export class MockPayService {
       );
     }
 
-    const response = await fetch(
-      `${this.baseUrl}/api/v1/payments`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.secretKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: data.amount,
-          currency: data.currency,
-          metadata: data.metadata,
-        }),
+    const response = await fetch(`${this.baseUrl}/api/v1/payments`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.secretKey}`,
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        amount: data.amount,
+        currency: data.currency,
+        metadata: data.metadata,
+      }),
+    });
 
     if (!response.ok) {
       const errorBody = await response.text();
@@ -56,10 +53,21 @@ export class MockPayService {
       );
     }
 
-    return response.json() as Promise<{
+    const resultado = (await response.json()) as {
       id_transaccion: string;
       checkout_url: string;
-    }>;
+    };
+
+    // Utilizar el dominio configurable del checkout,
+    // conservando la URL original como alternativa.
+    const checkoutUrl = this.checkoutBaseUrl
+      ? `${this.checkoutBaseUrl}/checkout/${encodeURIComponent(resultado.id_transaccion)}`
+      : resultado.checkout_url;
+
+    return {
+      id_transaccion: resultado.id_transaccion,
+      checkout_url: checkoutUrl,
+    };
   }
 
   async procesarWebhook(dto: MockPayWebhookDto) {
@@ -95,30 +103,23 @@ export class MockPayService {
           data: {
             estado: EstadoPago.APROBADO,
             fecha_validacion: new Date(),
-            observacion:
-              'Pago confirmado por MockPay mediante webhook.',
+            observacion: 'Pago confirmado por MockPay mediante webhook.',
           },
         });
 
-        const pagosAprobados =
-          await tx.pago.aggregate({
-            where: {
-              id_obligacion: pago.id_obligacion,
-              estado: EstadoPago.APROBADO,
-            },
-            _sum: {
-              monto: true,
-            },
-          });
+        const pagosAprobados = await tx.pago.aggregate({
+          where: {
+            id_obligacion: pago.id_obligacion,
+            estado: EstadoPago.APROBADO,
+          },
+          _sum: {
+            monto: true,
+          },
+        });
 
-        const totalPagado = Number(
-          pagosAprobados._sum.monto ?? 0,
-        );
+        const totalPagado = Number(pagosAprobados._sum.monto ?? 0);
 
-        if (
-          totalPagado >=
-          Number(pago.obligacion.monto)
-        ) {
+        if (totalPagado >= Number(pago.obligacion.monto)) {
           await tx.obligacionFinanciera.update({
             where: {
               id_obligacion: pago.id_obligacion,
@@ -142,15 +143,11 @@ export class MockPayService {
         data: {
           estado: EstadoPago.RECHAZADO,
           fecha_validacion: new Date(),
-          observacion:
-            dto.failure_reason ??
-            'Pago rechazado por MockPay.',
+          observacion: dto.failure_reason ?? 'Pago rechazado por MockPay.',
         },
       });
     }
 
-    throw new BadRequestException(
-      'Evento de MockPay no reconocido',
-    );
+    throw new BadRequestException('Evento de MockPay no reconocido');
   }
 }

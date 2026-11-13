@@ -6,11 +6,15 @@ export class UpdateUsuarioEstadoDto {
   @ApiProperty({
     enum: EstadoUsuario,
     example: EstadoUsuario.ACTIVO,
-    description: 'Nuevo estado del usuario',
+    description:
+      'Nuevo estado del usuario. Valores permitidos: ' +
+      'PENDIENTE (espera aprobación), ' +
+      'ACTIVO (habilitado), ' +
+      'SUSPENDIDO (suspendido) o ' +
+      'INACTIVO (deshabilitado).',
   })
   @IsEnum(EstadoUsuario, {
-    message:
-      'El estado debe ser PENDIENTE, ACTIVO, SUSPENDIDO o INACTIVO',
+    message: 'El estado debe ser PENDIENTE, ACTIVO, SUSPENDIDO o INACTIVO',
   })
   estado!: EstadoUsuario;
 }

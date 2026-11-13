@@ -8,6 +8,15 @@ import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter.
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+  //origin: permite que nuestro frontend, ejecutándose en Vite, acceda al backend.
+  // methods: permite los métodos HTTP que utiliza nuestra API.
+  // allowedHeaders: permite enviar el token JWT mediante Authorization.
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

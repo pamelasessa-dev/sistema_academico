@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/client.js';
+import { PrismaClient } from '../src/generated/prisma/client.js';
 
 const { Pool } = pg;
 
@@ -14,9 +14,40 @@ const pool = new Pool({
 
 const adapter = new PrismaPg(pool);
 
-const prisma = new PrismaClient({
-  adapter,
-});
+const prisma = new PrismaClient({ adapter });
+
+/**
+ * Busca un registro existente.
+ * Si existe, lo actualiza.
+ * Si no existe, lo crea.
+ *
+ * Se utiliza para modelos que no tienen una clave única
+ * adecuada para utilizar directamente con upsert().
+
+-Creamos una función reutilizable: upsertRecord()
+Su funcionamiento es:
+- ¿Existe el registro?
+Buscar registro en PostgreSQL
+- Sí existe
+Actualizar registro existente
+
+- No existe
+Crear registro nuevo
+
+*/
+async function upsertRecord<T>(
+  findExisting: () => Promise<T | null>,
+  updateExisting: (existing: T) => Promise<T>,
+  createNew: () => Promise<T>,
+): Promise<T> {
+  const existing = await findExisting();
+
+  if (existing) {
+    return updateExisting(existing);
+  }
+
+  return createNew();
+}
 
 async function main() {
   console.log('==========================================');
@@ -28,19 +59,27 @@ async function main() {
   // =====================================================
 
   const adminPasswordHash = await bcrypt.hash('Admin123', 10);
-
-  const recepcionistaPasswordHash = await bcrypt.hash('Recepcionista123', 10);
-
+  const recepcionistaPasswordHash = await bcrypt.hash(
+    'Recepcionista123',
+    10,
+  );
   const profesorPasswordHash = await bcrypt.hash('Profesor123', 10);
-
   const estudiantePasswordHash = await bcrypt.hash('Estudiante123', 10);
 
   // =====================================================
   // USUARIO ADMIN
   // =====================================================
 
-  const admin = await prisma.usuario.create({
-    data: {
+  const admin = await prisma.usuario.upsert({
+    where: { email: 'admin@sistemaacademico.com' },
+    update: {
+      primer_nombre: 'Administrador',
+      primer_apellido: 'Sistema',
+      password: adminPasswordHash,
+      rol: 'ADMIN',
+      estado: 'ACTIVO',
+    },
+    create: {
       primer_nombre: 'Administrador',
       primer_apellido: 'Sistema',
       email: 'admin@sistemaacademico.com',
@@ -54,8 +93,16 @@ async function main() {
   // USUARIO RECEPCIONISTA
   // =====================================================
 
-  const recepcionista = await prisma.usuario.create({
-    data: {
+  const recepcionista = await prisma.usuario.upsert({
+    where: { email: 'recepcionista@sistemaacademico.com' },
+    update: {
+      primer_nombre: 'Laura',
+      primer_apellido: 'Rodríguez',
+      password: recepcionistaPasswordHash,
+      rol: 'RECEPCIONISTA',
+      estado: 'ACTIVO',
+    },
+    create: {
       primer_nombre: 'Laura',
       primer_apellido: 'Rodríguez',
       email: 'recepcionista@sistemaacademico.com',
@@ -69,8 +116,16 @@ async function main() {
   // USUARIO PROFESOR
   // =====================================================
 
-  const profesorUsuario = await prisma.usuario.create({
-    data: {
+  const profesorUsuario = await prisma.usuario.upsert({
+    where: { email: 'profesor@sistemaacademico.com' },
+    update: {
+      primer_nombre: 'Juan',
+      primer_apellido: 'Pérez',
+      password: profesorPasswordHash,
+      rol: 'PROFESOR',
+      estado: 'ACTIVO',
+    },
+    create: {
       primer_nombre: 'Juan',
       primer_apellido: 'Pérez',
       email: 'profesor@sistemaacademico.com',
@@ -84,8 +139,13 @@ async function main() {
   // PROFESOR
   // =====================================================
 
-  const profesor = await prisma.profesor.create({
-    data: {
+  const profesor = await prisma.profesor.upsert({
+    where: { id_usuario: profesorUsuario.id_usuario },
+    update: {
+      especialidad: 'Programación',
+      fecha_contratacion: new Date('2026-03-01'),
+    },
+    create: {
       id_usuario: profesorUsuario.id_usuario,
       especialidad: 'Programación',
       fecha_contratacion: new Date('2026-03-01'),
@@ -96,34 +156,83 @@ async function main() {
   // TUTORES
   // =====================================================
 
-  const tutor1 = await prisma.tutor.create({
-    data: {
-      nombre: 'Carlos',
-      apellido: 'Gómez',
-      parentesco: 'Padre',
-      telefono: '099123456',
-      email: 'carlos.gomez@example.com',
-      direccion: 'Montevideo',
-    },
-  });
+  const tutor1 = await upsertRecord(
+    () =>
+      prisma.tutor.findFirst({
+        where: { email: 'carlos.gomez@example.com' },
+      }),
+    (existing) =>
+      prisma.tutor.update({
+        where: { id_tutor: existing.id_tutor },
+        data: {
+          nombre: 'Carlos',
+          apellido: 'Gómez',
+          parentesco: 'Padre',
+          telefono: '099123456',
+          email: 'carlos.gomez@example.com',
+          direccion: 'Montevideo',
+        },
+      }),
+    () =>
+      prisma.tutor.create({
+        data: {
+          nombre: 'Carlos',
+          apellido: 'Gómez',
+          parentesco: 'Padre',
+          telefono: '099123456',
+          email: 'carlos.gomez@example.com',
+          direccion: 'Montevideo',
+        },
+      }),
+  );
 
-  const tutor2 = await prisma.tutor.create({
-    data: {
-      nombre: 'María',
-      apellido: 'López',
-      parentesco: 'Madre',
-      telefono: '098654321',
-      email: 'maria.lopez@example.com',
-      direccion: 'Canelones',
-    },
-  });
+  const tutor2 = await upsertRecord(
+    () =>
+      prisma.tutor.findFirst({
+        where: { email: 'maria.lopez@example.com' },
+      }),
+    (existing) =>
+      prisma.tutor.update({
+        where: { id_tutor: existing.id_tutor },
+        data: {
+          nombre: 'María',
+          apellido: 'López',
+          parentesco: 'Madre',
+          telefono: '098654321',
+          email: 'maria.lopez@example.com',
+          direccion: 'Canelones',
+        },
+      }),
+    () =>
+      prisma.tutor.create({
+        data: {
+          nombre: 'María',
+          apellido: 'López',
+          parentesco: 'Madre',
+          telefono: '098654321',
+          email: 'maria.lopez@example.com',
+          direccion: 'Canelones',
+        },
+      }),
+  );
 
   // =====================================================
   // USUARIO ESTUDIANTE 1
   // =====================================================
 
-  const estudianteUsuario = await prisma.usuario.create({
-    data: {
+  // Creamos el usuario para el estudiante 1
+  //Utilizamos upsert() directamente cuando podemos
+
+  const estudianteUsuario = await prisma.usuario.upsert({
+    where: { email: 'estudiante@sistemaacademico.com' },
+    update: {
+      primer_nombre: 'Ana',
+      primer_apellido: 'García',
+      password: estudiantePasswordHash,
+      rol: 'ESTUDIANTE',
+      estado: 'ACTIVO',
+    },
+    create: {
       primer_nombre: 'Ana',
       primer_apellido: 'García',
       email: 'estudiante@sistemaacademico.com',
@@ -137,8 +246,16 @@ async function main() {
   // ESTUDIANTE 1
   // =====================================================
 
-  const estudiante = await prisma.estudiante.create({
-    data: {
+  const estudiante = await prisma.estudiante.upsert({
+    where: { nro_matricula: 'EST-2026-001' },
+    update: {
+      id_usuario: estudianteUsuario.id_usuario,
+      id_tutor: tutor1.id_tutor,
+      fecha_nacimiento: new Date('2005-05-15'),
+      direccion: 'Montevideo',
+      fecha_ingreso: new Date('2026-03-01'),
+    },
+    create: {
       id_usuario: estudianteUsuario.id_usuario,
       id_tutor: tutor1.id_tutor,
       nro_matricula: 'EST-2026-001',
@@ -152,8 +269,16 @@ async function main() {
   // USUARIO ESTUDIANTE 2
   // =====================================================
 
-  const estudiante2Usuario = await prisma.usuario.create({
-    data: {
+  const estudiante2Usuario = await prisma.usuario.upsert({
+    where: { email: 'estudiante2@sistemaacademico.com' },
+    update: {
+      primer_nombre: 'Luis',
+      primer_apellido: 'Martínez',
+      password: estudiantePasswordHash,
+      rol: 'ESTUDIANTE',
+      estado: 'ACTIVO',
+    },
+    create: {
       primer_nombre: 'Luis',
       primer_apellido: 'Martínez',
       email: 'estudiante2@sistemaacademico.com',
@@ -167,8 +292,16 @@ async function main() {
   // ESTUDIANTE 2
   // =====================================================
 
-  const estudiante2 = await prisma.estudiante.create({
-    data: {
+  const estudiante2 = await prisma.estudiante.upsert({
+    where: { nro_matricula: 'EST-2026-002' },
+    update: {
+      id_usuario: estudiante2Usuario.id_usuario,
+      id_tutor: tutor2.id_tutor,
+      fecha_nacimiento: new Date('2004-08-20'),
+      direccion: 'Canelones',
+      fecha_ingreso: new Date('2026-03-01'),
+    },
+    create: {
       id_usuario: estudiante2Usuario.id_usuario,
       id_tutor: tutor2.id_tutor,
       nro_matricula: 'EST-2026-002',
@@ -182,181 +315,390 @@ async function main() {
   // PERIODOS
   // =====================================================
 
-  const periodoActivo = await prisma.periodo.create({
-    data: {
-      nombre: 'Segundo semestre 2026',
-      fecha_inicio: new Date('2026-08-01'),
-      fecha_fin: new Date('2026-12-20'),
-      limite_creditos: 30,
-      estado: 'ACTIVO',
-    },
-  });
+  const periodoActivo = await upsertRecord(
+    () => prisma.periodo.findFirst({ where: { nombre: 'Segundo semestre 2026' } }),
+    (existing) =>
+      prisma.periodo.update({
+        where: { id_periodo: existing.id_periodo },
+        data: {
+          fecha_inicio: new Date('2026-08-01'),
+          fecha_fin: new Date('2026-12-20'),
+          limite_creditos: 30,
+          estado: 'ACTIVO',
+        },
+      }),
+    () =>
+      prisma.periodo.create({
+        data: {
+          nombre: 'Segundo semestre 2026',
+          fecha_inicio: new Date('2026-08-01'),
+          fecha_fin: new Date('2026-12-20'),
+          limite_creditos: 30,
+          estado: 'ACTIVO',
+        },
+      }),
+  );
 
-  const periodoPlanificado = await prisma.periodo.create({
-    data: {
-      nombre: 'Primer semestre 2027',
-      fecha_inicio: new Date('2027-03-01'),
-      fecha_fin: new Date('2027-07-31'),
-      limite_creditos: 30,
-      estado: 'PLANIFICADO',
-    },
-  });
+  const periodoPlanificado = await upsertRecord(
+    () => prisma.periodo.findFirst({ where: { nombre: 'Primer semestre 2027' } }),
+    (existing) =>
+      prisma.periodo.update({
+        where: { id_periodo: existing.id_periodo },
+        data: {
+          fecha_inicio: new Date('2027-03-01'),
+          fecha_fin: new Date('2027-07-31'),
+          limite_creditos: 30,
+          estado: 'PLANIFICADO',
+        },
+      }),
+    () =>
+      prisma.periodo.create({
+        data: {
+          nombre: 'Primer semestre 2027',
+          fecha_inicio: new Date('2027-03-01'),
+          fecha_fin: new Date('2027-07-31'),
+          limite_creditos: 30,
+          estado: 'PLANIFICADO',
+        },
+      }),
+  );
 
-  const periodoFinalizado = await prisma.periodo.create({
-    data: {
-      nombre: 'Primer semestre 2026',
-      fecha_inicio: new Date('2026-03-01'),
-      fecha_fin: new Date('2026-07-31'),
-      limite_creditos: 30,
-      estado: 'FINALIZADO',
-    },
-  });
+  const periodoFinalizado = await upsertRecord(
+    () => prisma.periodo.findFirst({ where: { nombre: 'Primer semestre 2026' } }),
+    (existing) =>
+      prisma.periodo.update({
+        where: { id_periodo: existing.id_periodo },
+        data: {
+          fecha_inicio: new Date('2026-03-01'),
+          fecha_fin: new Date('2026-07-31'),
+          limite_creditos: 30,
+          estado: 'FINALIZADO',
+        },
+      }),
+    () =>
+      prisma.periodo.create({
+        data: {
+          nombre: 'Primer semestre 2026',
+          fecha_inicio: new Date('2026-03-01'),
+          fecha_fin: new Date('2026-07-31'),
+          limite_creditos: 30,
+          estado: 'FINALIZADO',
+        },
+      }),
+  );
 
   // =====================================================
   // MATERIAS
   // =====================================================
+//Usamos búsquedas para los modelos sin clave única
+//Aplicamos el mismo criterio a periodos, aulas, grupos, horarios, tutores, actividades, obligaciones y pago
+  const materiaProgramacion = await upsertRecord(
+    () => prisma.materia.findFirst({ where: { nombre: 'Programación Web' } }),
+    (existing) =>
+      prisma.materia.update({
+        where: { id_materia: existing.id_materia },
+        data: {
+          descripcion: 'Introducción al desarrollo de aplicaciones web.',
+          creditos: 5,
+          costos_inscripcion: 5000,
+          costo_mensual: 3500,
+          estado: 'ACTIVA',
+        },
+      }),
+    () =>
+      prisma.materia.create({
+        data: {
+          nombre: 'Programación Web',
+          descripcion: 'Introducción al desarrollo de aplicaciones web.',
+          creditos: 5,
+          costos_inscripcion: 5000,
+          costo_mensual: 3500,
+          estado: 'ACTIVA',
+        },
+      }),
+  );
 
-  const materiaProgramacion = await prisma.materia.create({
-    data: {
-      nombre: 'Programación Web',
-      descripcion: 'Introducción al desarrollo de aplicaciones web.',
-      creditos: 5,
-      costos_inscripcion: 5000,
-      costo_mensual: 3500,
-      estado: 'ACTIVA',
-    },
-  });
+  const materiaBaseDatos = await upsertRecord(
+    () => prisma.materia.findFirst({ where: { nombre: 'Bases de Datos' } }),
+    (existing) =>
+      prisma.materia.update({
+        where: { id_materia: existing.id_materia },
+        data: {
+          descripcion: 'Fundamentos de bases de datos relacionales.',
+          creditos: 5,
+          costos_inscripcion: 5000,
+          costo_mensual: 3500,
+          estado: 'ACTIVA',
+        },
+      }),
+    () =>
+      prisma.materia.create({
+        data: {
+          nombre: 'Bases de Datos',
+          descripcion: 'Fundamentos de bases de datos relacionales.',
+          creditos: 5,
+          costos_inscripcion: 5000,
+          costo_mensual: 3500,
+          estado: 'ACTIVA',
+        },
+      }),
+  );
 
-  const materiaBaseDatos = await prisma.materia.create({
-    data: {
-      nombre: 'Bases de Datos',
-      descripcion: 'Fundamentos de bases de datos relacionales.',
-      creditos: 5,
-      costos_inscripcion: 5000,
-      costo_mensual: 3500,
-      estado: 'ACTIVA',
-    },
-  });
-
-  const materiaInactiva = await prisma.materia.create({
-    data: {
-      nombre: 'Materia Inactiva de Prueba',
-      descripcion: 'Materia utilizada para probar estados inactivos.',
-      creditos: 4,
-      costos_inscripcion: 4000,
-      costo_mensual: 3000,
-      estado: 'INACTIVA',
-    },
-  });
-
-  // Evitar warning de variable no utilizada.
-  void materiaInactiva;
+  const materiaInactiva = await upsertRecord(
+    () =>
+      prisma.materia.findFirst({
+        where: { nombre: 'Materia Inactiva de Prueba' },
+      }),
+    (existing) =>
+      prisma.materia.update({
+        where: { id_materia: existing.id_materia },
+        data: {
+          descripcion: 'Materia utilizada para probar estados inactivos.',
+          creditos: 4,
+          costos_inscripcion: 4000,
+          costo_mensual: 3000,
+          estado: 'INACTIVA',
+        },
+      }),
+    () =>
+      prisma.materia.create({
+        data: {
+          nombre: 'Materia Inactiva de Prueba',
+          descripcion: 'Materia utilizada para probar estados inactivos.',
+          creditos: 4,
+          costos_inscripcion: 4000,
+          costo_mensual: 3000,
+          estado: 'INACTIVA',
+        },
+      }),
+  );
 
   // =====================================================
   // AULAS
   // =====================================================
 
-  const aulaFisica = await prisma.aula.create({
-    data: {
-      nombre: 'Laboratorio 1',
-      capacidad: 30,
-      ubicacion: 'Primer piso',
-      tipo: 'FISICA',
-      estado: 'DISPONIBLE',
-    },
-  });
+  const aulaFisica = await upsertRecord(
+    () => prisma.aula.findFirst({ where: { nombre: 'Laboratorio 1' } }),
+    (existing) =>
+      prisma.aula.update({
+        where: { id_aula: existing.id_aula },
+        data: {
+          capacidad: 30,
+          ubicacion: 'Primer piso',
+          tipo: 'FISICA',
+          estado: 'DISPONIBLE',
+        },
+      }),
+    () =>
+      prisma.aula.create({
+        data: {
+          nombre: 'Laboratorio 1',
+          capacidad: 30,
+          ubicacion: 'Primer piso',
+          tipo: 'FISICA',
+          estado: 'DISPONIBLE',
+        },
+      }),
+  );
 
-  const aulaVirtual = await prisma.aula.create({
-    data: {
-      nombre: 'Aula Virtual 1',
-      capacidad: 50,
-      ubicacion: 'Plataforma virtual',
-      tipo: 'VIRTUAL',
-      estado: 'DISPONIBLE',
-    },
-  });
+  const aulaVirtual = await upsertRecord(
+    () => prisma.aula.findFirst({ where: { nombre: 'Aula Virtual 1' } }),
+    (existing) =>
+      prisma.aula.update({
+        where: { id_aula: existing.id_aula },
+        data: {
+          capacidad: 50,
+          ubicacion: 'Plataforma virtual',
+          tipo: 'VIRTUAL',
+          estado: 'DISPONIBLE',
+        },
+      }),
+    () =>
+      prisma.aula.create({
+        data: {
+          nombre: 'Aula Virtual 1',
+          capacidad: 50,
+          ubicacion: 'Plataforma virtual',
+          tipo: 'VIRTUAL',
+          estado: 'DISPONIBLE',
+        },
+      }),
+  );
 
-  const aulaNoDisponible = await prisma.aula.create({
-    data: {
-      nombre: 'Laboratorio 2',
-      capacidad: 20,
-      ubicacion: 'Segundo piso',
-      tipo: 'FISICA',
-      estado: 'NO_DISPONIBLE',
-    },
-  });
-
-  void aulaNoDisponible;
+  const aulaNoDisponible = await upsertRecord(
+    () => prisma.aula.findFirst({ where: { nombre: 'Laboratorio 2' } }),
+    (existing) =>
+      prisma.aula.update({
+        where: { id_aula: existing.id_aula },
+        data: {
+          capacidad: 20,
+          ubicacion: 'Segundo piso',
+          tipo: 'FISICA',
+          estado: 'NO_DISPONIBLE',
+        },
+      }),
+    () =>
+      prisma.aula.create({
+        data: {
+          nombre: 'Laboratorio 2',
+          capacidad: 20,
+          ubicacion: 'Segundo piso',
+          tipo: 'FISICA',
+          estado: 'NO_DISPONIBLE',
+        },
+      }),
+  );
 
   // =====================================================
-  // GRUPO ABIERTO
+  // GRUPOS
   // =====================================================
 
-  const grupoActivo = await prisma.grupo.create({
-    data: {
-      id_materia: materiaProgramacion.id_materia,
-      id_periodo: periodoActivo.id_periodo,
-      id_profesor: profesor.id_profesor,
-      id_aula: aulaFisica.id_aula,
-      nombre: 'Grupo A',
-      cupo_maximo: 30,
-      estado: 'ABIERTO',
-    },
-  });
+  const grupoActivo = await upsertRecord(
+    () =>
+      prisma.grupo.findFirst({
+        where: {
+          id_materia: materiaProgramacion.id_materia,
+          id_periodo: periodoActivo.id_periodo,
+          nombre: 'Grupo A',
+        },
+      }),
+    (existing) =>
+      prisma.grupo.update({
+        where: { id_grupo: existing.id_grupo },
+        data: {
+          id_profesor: profesor.id_profesor,
+          id_aula: aulaFisica.id_aula,
+          cupo_maximo: 30,
+          estado: 'ABIERTO',
+        },
+      }),
+    () =>
+      prisma.grupo.create({
+        data: {
+          id_materia: materiaProgramacion.id_materia,
+          id_periodo: periodoActivo.id_periodo,
+          id_profesor: profesor.id_profesor,
+          id_aula: aulaFisica.id_aula,
+          nombre: 'Grupo A',
+          cupo_maximo: 30,
+          estado: 'ABIERTO',
+        },
+      }),
+  );
 
-  // =====================================================
-  // GRUPO CERRADO
-  // =====================================================
+  const grupoCerrado = await upsertRecord(
+    () =>
+      prisma.grupo.findFirst({
+        where: {
+          id_materia: materiaBaseDatos.id_materia,
+          id_periodo: periodoActivo.id_periodo,
+          nombre: 'Grupo B',
+        },
+      }),
+    (existing) =>
+      prisma.grupo.update({
+        where: { id_grupo: existing.id_grupo },
+        data: {
+          id_profesor: profesor.id_profesor,
+          id_aula: aulaVirtual.id_aula,
+          cupo_maximo: 25,
+          estado: 'CERRADO',
+        },
+      }),
+    () =>
+      prisma.grupo.create({
+        data: {
+          id_materia: materiaBaseDatos.id_materia,
+          id_periodo: periodoActivo.id_periodo,
+          id_profesor: profesor.id_profesor,
+          id_aula: aulaVirtual.id_aula,
+          nombre: 'Grupo B',
+          cupo_maximo: 25,
+          estado: 'CERRADO',
+        },
+      }),
+  );
 
-  const grupoCerrado = await prisma.grupo.create({
-    data: {
-      id_materia: materiaBaseDatos.id_materia,
-      id_periodo: periodoActivo.id_periodo,
-      id_profesor: profesor.id_profesor,
-      id_aula: aulaVirtual.id_aula,
-      nombre: 'Grupo B',
-      cupo_maximo: 25,
-      estado: 'CERRADO',
-    },
-  });
-
-  // =====================================================
-  // GRUPO FINALIZADO
-  // =====================================================
-
-  const grupoFinalizado = await prisma.grupo.create({
-    data: {
-      id_materia: materiaProgramacion.id_materia,
-      id_periodo: periodoFinalizado.id_periodo,
-      id_profesor: profesor.id_profesor,
-      id_aula: aulaFisica.id_aula,
-      nombre: 'Grupo C',
-      cupo_maximo: 30,
-      estado: 'FINALIZADO',
-    },
-  });
+  const grupoFinalizado = await upsertRecord(
+    () =>
+      prisma.grupo.findFirst({
+        where: {
+          id_materia: materiaProgramacion.id_materia,
+          id_periodo: periodoFinalizado.id_periodo,
+          nombre: 'Grupo C',
+        },
+      }),
+    (existing) =>
+      prisma.grupo.update({
+        where: { id_grupo: existing.id_grupo },
+        data: {
+          id_profesor: profesor.id_profesor,
+          id_aula: aulaFisica.id_aula,
+          cupo_maximo: 30,
+          estado: 'FINALIZADO',
+        },
+      }),
+    () =>
+      prisma.grupo.create({
+        data: {
+          id_materia: materiaProgramacion.id_materia,
+          id_periodo: periodoFinalizado.id_periodo,
+          id_profesor: profesor.id_profesor,
+          id_aula: aulaFisica.id_aula,
+          nombre: 'Grupo C',
+          cupo_maximo: 30,
+          estado: 'FINALIZADO',
+        },
+      }),
+  );
 
   // =====================================================
   // HORARIO
   // =====================================================
 
-  const horario = await prisma.horario.create({
-    data: {
-      id_grupo: grupoActivo.id_grupo,
-      dia_semana: 'LUNES',
-      hora_inicio: new Date('1970-01-01T18:00:00'),
-      hora_fin: new Date('1970-01-01T20:00:00'),
+  const horario = await upsertRecord(
+    () =>
+      prisma.horario.findFirst({
+        where: {
+          id_grupo: grupoActivo.id_grupo,
+          dia_semana: 'LUNES',
+          hora_inicio: new Date('1970-01-01T18:00:00'),
+        },
+      }),
+    (existing) =>
+      prisma.horario.update({
+        where: { id_horario: existing.id_horario },
+        data: {
+          hora_fin: new Date('1970-01-01T20:00:00'),
+        },
+      }),
+    () =>
+      prisma.horario.create({
+        data: {
+          id_grupo: grupoActivo.id_grupo,
+          dia_semana: 'LUNES',
+          hora_inicio: new Date('1970-01-01T18:00:00'),
+          hora_fin: new Date('1970-01-01T20:00:00'),
+        },
+      }),
+  );
+
+  // =====================================================
+  // MATRÍCULAS
+  // =====================================================
+
+  const matriculaAnaActiva = await prisma.matricula.upsert({
+    where: {
+      id_estudiante_id_grupo: {
+        id_estudiante: estudiante.id_estudiante,
+        id_grupo: grupoActivo.id_grupo,
+      },
     },
-  });
-
-  void horario;
-
-  // =====================================================
-  // MATRÍCULA ANA - ACTIVA
-  // =====================================================
-
-  const matriculaAnaActiva = await prisma.matricula.create({
-    data: {
+    update: {
+      fecha_matricula: new Date('2026-08-05'),
+      estado: 'ACTIVA',
+    },
+    create: {
       id_estudiante: estudiante.id_estudiante,
       id_grupo: grupoActivo.id_grupo,
       fecha_matricula: new Date('2026-08-05'),
@@ -364,12 +706,18 @@ async function main() {
     },
   });
 
-  // =====================================================
-  // MATRÍCULA ANA - PENDIENTE
-  // =====================================================
-
-  const matriculaAnaPendiente = await prisma.matricula.create({
-    data: {
+  const matriculaAnaPendiente = await prisma.matricula.upsert({
+    where: {
+      id_estudiante_id_grupo: {
+        id_estudiante: estudiante.id_estudiante,
+        id_grupo: grupoCerrado.id_grupo,
+      },
+    },
+    update: {
+      fecha_matricula: new Date('2026-08-10'),
+      estado: 'PENDIENTE',
+    },
+    create: {
       id_estudiante: estudiante.id_estudiante,
       id_grupo: grupoCerrado.id_grupo,
       fecha_matricula: new Date('2026-08-10'),
@@ -377,12 +725,18 @@ async function main() {
     },
   });
 
-  // =====================================================
-  // MATRÍCULA LUIS - FINALIZADA
-  // =====================================================
-
-  const matriculaLuisFinalizada = await prisma.matricula.create({
-    data: {
+  const matriculaLuisFinalizada = await prisma.matricula.upsert({
+    where: {
+      id_estudiante_id_grupo: {
+        id_estudiante: estudiante2.id_estudiante,
+        id_grupo: grupoFinalizado.id_grupo,
+      },
+    },
+    update: {
+      fecha_matricula: new Date('2026-03-05'),
+      estado: 'FINALIZADA',
+    },
+    create: {
       id_estudiante: estudiante2.id_estudiante,
       id_grupo: grupoFinalizado.id_grupo,
       fecha_matricula: new Date('2026-03-05'),
@@ -390,14 +744,18 @@ async function main() {
     },
   });
 
-  // =====================================================
-  // MATRÍCULA LUIS - PENDIENTE
-  // =====================================================
-  // Esta se utilizará para probar el flujo:
-  // matrícula pendiente → pago → verificación.
-
-  const matriculaLuisPendiente = await prisma.matricula.create({
-    data: {
+  const matriculaLuisPendiente = await prisma.matricula.upsert({
+    where: {
+      id_estudiante_id_grupo: {
+        id_estudiante: estudiante2.id_estudiante,
+        id_grupo: grupoCerrado.id_grupo,
+      },
+    },
+    update: {
+      fecha_matricula: new Date('2026-09-01'),
+      estado: 'PENDIENTE',
+    },
+    create: {
       id_estudiante: estudiante2.id_estudiante,
       id_grupo: grupoCerrado.id_grupo,
       fecha_matricula: new Date('2026-09-01'),
@@ -406,49 +764,103 @@ async function main() {
   });
 
   // =====================================================
-  // ACTIVIDAD ABIERTA
+  // ACTIVIDADES
   // =====================================================
 
-  const actividadAbierta = await prisma.actividadAcademica.create({
-    data: {
-      id_grupo: grupoActivo.id_grupo,
-      titulo: 'Parcial 1 - Programación Web',
-      descripcion: 'Evaluación sobre fundamentos de desarrollo web.',
-      tipo: 'PARCIAL',
-      puntaje_maximo: 100,
-      porcentaje_aporte: 30,
-      fecha_apertura: new Date('2026-09-01'),
-      fecha_cierre: new Date('2026-12-01'),
-      estado: 'ABIERTA',
-    },
-  });
+  const actividadAbierta = await upsertRecord(
+    () =>
+      prisma.actividadAcademica.findFirst({
+        where: {
+          id_grupo: grupoActivo.id_grupo,
+          titulo: 'Parcial 1 - Programación Web',
+        },
+      }),
+    (existing) =>
+      prisma.actividadAcademica.update({
+        where: { id_actividad: existing.id_actividad },
+        data: {
+          descripcion: 'Evaluación sobre fundamentos de desarrollo web.',
+          tipo: 'PARCIAL',
+          puntaje_maximo: 100,
+          porcentaje_aporte: 30,
+          fecha_apertura: new Date('2026-09-01'),
+          fecha_cierre: new Date('2026-12-01'),
+          estado: 'ABIERTA',
+        },
+      }),
+    () =>
+      prisma.actividadAcademica.create({
+        data: {
+          id_grupo: grupoActivo.id_grupo,
+          titulo: 'Parcial 1 - Programación Web',
+          descripcion: 'Evaluación sobre fundamentos de desarrollo web.',
+          tipo: 'PARCIAL',
+          puntaje_maximo: 100,
+          porcentaje_aporte: 30,
+          fecha_apertura: new Date('2026-09-01'),
+          fecha_cierre: new Date('2026-12-01'),
+          estado: 'ABIERTA',
+        },
+      }),
+  );
 
-  // =====================================================
-  // ACTIVIDAD BORRADOR
-  // =====================================================
-
-  const actividadBorrador = await prisma.actividadAcademica.create({
-    data: {
-      id_grupo: grupoActivo.id_grupo,
-      titulo: 'Proyecto Final',
-      descripcion: 'Proyecto final de la asignatura.',
-      tipo: 'PROYECTO',
-      puntaje_maximo: 100,
-      porcentaje_aporte: 40,
-      fecha_apertura: new Date('2026-10-15'),
-      fecha_cierre: new Date('2026-12-10'),
-      estado: 'BORRADOR',
-    },
-  });
-
-  void actividadBorrador;
+  const actividadBorrador = await upsertRecord(
+    () =>
+      prisma.actividadAcademica.findFirst({
+        where: {
+          id_grupo: grupoActivo.id_grupo,
+          titulo: 'Proyecto Final',
+        },
+      }),
+    (existing) =>
+      prisma.actividadAcademica.update({
+        where: { id_actividad: existing.id_actividad },
+        data: {
+          descripcion: 'Proyecto final de la asignatura.',
+          tipo: 'PROYECTO',
+          puntaje_maximo: 100,
+          porcentaje_aporte: 40,
+          fecha_apertura: new Date('2026-10-15'),
+          fecha_cierre: new Date('2026-12-10'),
+          estado: 'BORRADOR',
+        },
+      }),
+    () =>
+      prisma.actividadAcademica.create({
+        data: {
+          id_grupo: grupoActivo.id_grupo,
+          titulo: 'Proyecto Final',
+          descripcion: 'Proyecto final de la asignatura.',
+          tipo: 'PROYECTO',
+          puntaje_maximo: 100,
+          porcentaje_aporte: 40,
+          fecha_apertura: new Date('2026-10-15'),
+          fecha_cierre: new Date('2026-12-10'),
+          estado: 'BORRADOR',
+        },
+      }),
+  );
 
   // =====================================================
   // ENTREGA ANA - CALIFICADA
   // =====================================================
 
-  const entrega = await prisma.entrega.create({
-    data: {
+  const entrega = await prisma.entrega.upsert({
+    where: {
+      id_actividad_id_matricula: {
+        id_actividad: actividadAbierta.id_actividad,
+        id_matricula: matriculaAnaActiva.id_matricula,
+      },
+    },
+    update: {
+      fecha_entrega: new Date('2026-09-20'),
+      archivo_url: 'https://example.com/entrega-parcial-1.pdf',
+      respuesta_texto: 'Entrega de prueba para validar el flujo académico.',
+      puntaje_obtenido: 85,
+      observacion_docente: 'Buen trabajo. Cumple con los requisitos.',
+      estado: 'CALIFICADA',
+    },
+    create: {
       id_actividad: actividadAbierta.id_actividad,
       id_matricula: matriculaAnaActiva.id_matricula,
       fecha_entrega: new Date('2026-09-20'),
@@ -461,196 +873,361 @@ async function main() {
   });
 
   // =====================================================
-  // OBLIGACIÓN ANA - PAGADA
+  // OBLIGACIONES FINANCIERAS
   // =====================================================
 
-  const obligacionPagada = await prisma.obligacionFinanciera.create({
-    data: {
-      id_estudiante: estudiante.id_estudiante,
-      id_matricula: matriculaAnaActiva.id_matricula,
-      concepto: 'INSCRIPCION',
-      monto: 5000,
-      fecha_emision: new Date('2026-08-05'),
-      fecha_vencimiento: new Date('2026-08-15'),
-      estado: 'PAGADA',
-    },
-  });
+  const obligacionPagada = await upsertRecord(
+    () =>
+      prisma.obligacionFinanciera.findFirst({
+        where: {
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'INSCRIPCION',
+          fecha_emision: new Date('2026-08-05'),
+        },
+      }),
+    (existing) =>
+      prisma.obligacionFinanciera.update({
+        where: { id_obligacion: existing.id_obligacion },
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          monto: 5000,
+          fecha_vencimiento: new Date('2026-08-15'),
+          estado: 'PAGADA',
+        },
+      }),
+    () =>
+      prisma.obligacionFinanciera.create({
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'INSCRIPCION',
+          monto: 5000,
+          fecha_emision: new Date('2026-08-05'),
+          fecha_vencimiento: new Date('2026-08-15'),
+          estado: 'PAGADA',
+        },
+      }),
+  );
+
+  const obligacionPasarela = await upsertRecord(
+    () =>
+      prisma.obligacionFinanciera.findFirst({
+        where: {
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'MENSUALIDAD',
+          fecha_emision: new Date('2026-09-01'),
+        },
+      }),
+    (existing) =>
+      prisma.obligacionFinanciera.update({
+        where: { id_obligacion: existing.id_obligacion },
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          monto: 3500,
+          fecha_vencimiento: new Date('2026-10-15'),
+          estado: 'PENDIENTE',
+        },
+      }),
+    () =>
+      prisma.obligacionFinanciera.create({
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'MENSUALIDAD',
+          monto: 3500,
+          fecha_emision: new Date('2026-09-01'),
+          fecha_vencimiento: new Date('2026-10-15'),
+          estado: 'PENDIENTE',
+        },
+      }),
+  );
+
+  const obligacionVencida = await upsertRecord(
+    () =>
+      prisma.obligacionFinanciera.findFirst({
+        where: {
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'MENSUALIDAD',
+          fecha_emision: new Date('2026-07-01'),
+        },
+      }),
+    (existing) =>
+      prisma.obligacionFinanciera.update({
+        where: { id_obligacion: existing.id_obligacion },
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          monto: 3500,
+          fecha_vencimiento: new Date('2026-07-31'),
+          estado: 'VENCIDA',
+        },
+      }),
+    () =>
+      prisma.obligacionFinanciera.create({
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'MENSUALIDAD',
+          monto: 3500,
+          fecha_emision: new Date('2026-07-01'),
+          fecha_vencimiento: new Date('2026-07-31'),
+          estado: 'VENCIDA',
+        },
+      }),
+  );
+
+  const obligacionCancelada = await upsertRecord(
+    () =>
+      prisma.obligacionFinanciera.findFirst({
+        where: {
+          id_matricula: matriculaAnaPendiente.id_matricula,
+          concepto: 'OTRO',
+          fecha_emision: new Date('2026-08-10'),
+        },
+      }),
+    (existing) =>
+      prisma.obligacionFinanciera.update({
+        where: { id_obligacion: existing.id_obligacion },
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          monto: 1000,
+          fecha_vencimiento: new Date('2026-08-20'),
+          estado: 'CANCELADA',
+        },
+      }),
+    () =>
+      prisma.obligacionFinanciera.create({
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          id_matricula: matriculaAnaPendiente.id_matricula,
+          concepto: 'OTRO',
+          monto: 1000,
+          fecha_emision: new Date('2026-08-10'),
+          fecha_vencimiento: new Date('2026-08-20'),
+          estado: 'CANCELADA',
+        },
+      }),
+  );
+
+  const obligacionRechazada = await upsertRecord(
+    () =>
+      prisma.obligacionFinanciera.findFirst({
+        where: {
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'OTRO',
+          fecha_emision: new Date('2026-09-15'),
+        },
+      }),
+    (existing) =>
+      prisma.obligacionFinanciera.update({
+        where: { id_obligacion: existing.id_obligacion },
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          monto: 2000,
+          fecha_vencimiento: new Date('2026-10-30'),
+          estado: 'PENDIENTE',
+        },
+      }),
+    () =>
+      prisma.obligacionFinanciera.create({
+        data: {
+          id_estudiante: estudiante.id_estudiante,
+          id_matricula: matriculaAnaActiva.id_matricula,
+          concepto: 'OTRO',
+          monto: 2000,
+          fecha_emision: new Date('2026-09-15'),
+          fecha_vencimiento: new Date('2026-10-30'),
+          estado: 'PENDIENTE',
+        },
+      }),
+  );
+
+  const obligacionLuis = await upsertRecord(
+    () =>
+      prisma.obligacionFinanciera.findFirst({
+        where: {
+          id_matricula: matriculaLuisPendiente.id_matricula,
+          concepto: 'INSCRIPCION',
+          fecha_emision: new Date('2026-09-01'),
+        },
+      }),
+    (existing) =>
+      prisma.obligacionFinanciera.update({
+        where: { id_obligacion: existing.id_obligacion },
+        data: {
+          id_estudiante: estudiante2.id_estudiante,
+          monto: 5000,
+          fecha_vencimiento: new Date('2026-10-30'),
+          estado: 'PENDIENTE',
+        },
+      }),
+    () =>
+      prisma.obligacionFinanciera.create({
+        data: {
+          id_estudiante: estudiante2.id_estudiante,
+          id_matricula: matriculaLuisPendiente.id_matricula,
+          concepto: 'INSCRIPCION',
+          monto: 5000,
+          fecha_emision: new Date('2026-09-01'),
+          fecha_vencimiento: new Date('2026-10-30'),
+          estado: 'PENDIENTE',
+        },
+      }),
+  );
 
   // =====================================================
-  // PAGO ANA - APROBADO
+  // PAGOS
   // =====================================================
 
-  const pagoAprobado = await prisma.pago.create({
-    data: {
-      id_obligacion: obligacionPagada.id_obligacion,
-      id_usuario_verificador: recepcionista.id_usuario,
-      monto: 5000,
-      fecha_pago: new Date('2026-08-06'),
-      metodo: 'TRANSFERENCIA',
-      estado: 'APROBADO',
-      fecha_validacion: new Date('2026-08-06'),
-      observacion: 'Pago aprobado durante la carga inicial.',
-    },
-  });
+  const pagoAprobado = await upsertRecord(
+    () =>
+      prisma.pago.findFirst({
+        where: {
+          id_obligacion: obligacionPagada.id_obligacion,
+          fecha_pago: new Date('2026-08-06'),
+          metodo: 'TRANSFERENCIA',
+        },
+      }),
+    (existing) =>
+      prisma.pago.update({
+        where: { id_pago: existing.id_pago },
+        data: {
+          id_usuario_verificador: recepcionista.id_usuario,
+          monto: 5000,
+          estado: 'APROBADO',
+          fecha_validacion: new Date('2026-08-06'),
+          observacion: 'Pago aprobado durante la carga inicial.',
+        },
+      }),
+    () =>
+      prisma.pago.create({
+        data: {
+          id_obligacion: obligacionPagada.id_obligacion,
+          id_usuario_verificador: recepcionista.id_usuario,
+          monto: 5000,
+          fecha_pago: new Date('2026-08-06'),
+          metodo: 'TRANSFERENCIA',
+          estado: 'APROBADO',
+          fecha_validacion: new Date('2026-08-06'),
+          observacion: 'Pago aprobado durante la carga inicial.',
+        },
+      }),
+  );
 
-  // =====================================================
-  // OBLIGACIÓN ANA - PASARELA / MOCKPAY
-  // =====================================================
-  // IMPORTANTE:
-  // No tiene ningún pago.
-  //
-  // Esta será la obligación utilizada para probar:
-  //
-  // POST /pagos
-  // metodo: PASARELA
-  //
-  // Luego, con MockPay real:
-  //
-  // Pago PENDIENTE
-  //       ↓
-  // Webhook SUCCEEDED
-  //       ↓
-  // Pago APROBADO
-  //       ↓
-  // Obligación PAGADA
+  const pagoRechazado = await upsertRecord(
+    () =>
+      prisma.pago.findFirst({
+        where: {
+          id_obligacion: obligacionRechazada.id_obligacion,
+          fecha_pago: new Date('2026-09-20'),
+          metodo: 'TRANSFERENCIA',
+        },
+      }),
+    (existing) =>
+      prisma.pago.update({
+        where: { id_pago: existing.id_pago },
+        data: {
+          monto: 2000,
+          estado: 'RECHAZADO',
+          fecha_validacion: new Date('2026-09-20'),
+          id_usuario_verificador: recepcionista.id_usuario,
+          observacion: 'Comprobante de transferencia inválido.',
+        },
+      }),
+    () =>
+      prisma.pago.create({
+        data: {
+          id_obligacion: obligacionRechazada.id_obligacion,
+          monto: 2000,
+          fecha_pago: new Date('2026-09-20'),
+          metodo: 'TRANSFERENCIA',
+          estado: 'RECHAZADO',
+          fecha_validacion: new Date('2026-09-20'),
+          id_usuario_verificador: recepcionista.id_usuario,
+          observacion: 'Comprobante de transferencia inválido.',
+        },
+      }),
+  );
 
-  const obligacionPasarela = await prisma.obligacionFinanciera.create({
-    data: {
-      id_estudiante: estudiante.id_estudiante,
-      id_matricula: matriculaAnaActiva.id_matricula,
-      concepto: 'MENSUALIDAD',
-      monto: 3500,
-      fecha_emision: new Date('2026-09-01'),
-      fecha_vencimiento: new Date('2026-10-15'),
-      estado: 'PENDIENTE',
-    },
-  });
-
-  // =====================================================
-  // OBLIGACIÓN ANA - VENCIDA
-  // =====================================================
-
-  const obligacionVencida = await prisma.obligacionFinanciera.create({
-    data: {
-      id_estudiante: estudiante.id_estudiante,
-      id_matricula: matriculaAnaActiva.id_matricula,
-      concepto: 'MENSUALIDAD',
-      monto: 3500,
-      fecha_emision: new Date('2026-07-01'),
-      fecha_vencimiento: new Date('2026-07-31'),
-      estado: 'VENCIDA',
-    },
-  });
-
-  // =====================================================
-  // OBLIGACIÓN ANA - CANCELADA
-  // =====================================================
-
-  const obligacionCancelada = await prisma.obligacionFinanciera.create({
-    data: {
-      id_estudiante: estudiante.id_estudiante,
-      id_matricula: matriculaAnaPendiente.id_matricula,
-      concepto: 'OTRO',
-      monto: 1000,
-      fecha_emision: new Date('2026-08-10'),
-      fecha_vencimiento: new Date('2026-08-20'),
-      estado: 'CANCELADA',
-    },
-  });
-
-  // =====================================================
-  // OBLIGACIÓN ANA - PENDIENTE
-  // CON PAGO RECHAZADO
-  // =====================================================
-
-  const obligacionRechazada = await prisma.obligacionFinanciera.create({
-    data: {
-      id_estudiante: estudiante.id_estudiante,
-      id_matricula: matriculaAnaActiva.id_matricula,
-      concepto: 'OTRO',
-      monto: 2000,
-      fecha_emision: new Date('2026-09-15'),
-      fecha_vencimiento: new Date('2026-10-30'),
-      estado: 'PENDIENTE',
-    },
-  });
-
-  const pagoRechazado = await prisma.pago.create({
-    data: {
-      id_obligacion: obligacionRechazada.id_obligacion,
-      monto: 2000,
-      fecha_pago: new Date('2026-09-20'),
-      metodo: 'TRANSFERENCIA',
-      estado: 'RECHAZADO',
-      fecha_validacion: new Date('2026-09-20'),
-      id_usuario_verificador: recepcionista.id_usuario,
-      observacion: 'Comprobante de transferencia inválido.',
-    },
-  });
-
-  // =====================================================
-  // OBLIGACIÓN LUIS - PENDIENTE
-  // =====================================================
-
-  const obligacionLuis = await prisma.obligacionFinanciera.create({
-    data: {
-      id_estudiante: estudiante2.id_estudiante,
-      id_matricula: matriculaLuisPendiente.id_matricula,
-      concepto: 'INSCRIPCION',
-      monto: 5000,
-      fecha_emision: new Date('2026-09-01'),
-      fecha_vencimiento: new Date('2026-10-30'),
-      estado: 'PENDIENTE',
-    },
-  });
-
-  // =====================================================
-  // PAGO LUIS - PENDIENTE
-  // =====================================================
-  // Este pago sirve para probar desde Swagger:
-  //
-  // PATCH /pagos/:id/aprobar
-  //
-  // y:
-  //
-  // PATCH /pagos/:id/rechazar
-  //
-  // Al aprobarlo:
-  //
-  // Pago → APROBADO
-  // Obligación → PAGADA
-
-  const pagoPendiente = await prisma.pago.create({
-    data: {
-      id_obligacion: obligacionLuis.id_obligacion,
-      monto: 5000,
-      fecha_pago: new Date('2026-09-25'),
-      metodo: 'TRANSFERENCIA',
-      estado: 'PENDIENTE',
-    },
-  });
+  const pagoPendiente = await upsertRecord(
+    () =>
+      prisma.pago.findFirst({
+        where: {
+          id_obligacion: obligacionLuis.id_obligacion,
+          fecha_pago: new Date('2026-09-25'),
+          metodo: 'TRANSFERENCIA',
+        },
+      }),
+    (existing) =>
+      prisma.pago.update({
+        where: { id_pago: existing.id_pago },
+        data: {
+          monto: 5000,
+          estado: 'PENDIENTE',
+          fecha_validacion: null,
+          id_usuario_verificador: null,
+          observacion: null,
+        },
+      }),
+    () =>
+      prisma.pago.create({
+        data: {
+          id_obligacion: obligacionLuis.id_obligacion,
+          monto: 5000,
+          fecha_pago: new Date('2026-09-25'),
+          metodo: 'TRANSFERENCIA',
+          estado: 'PENDIENTE',
+        },
+      }),
+  );
 
   // =====================================================
   // AUDITORÍA
   // =====================================================
 
-  await prisma.auditoria.create({
-    data: {
+  const auditoriaExistente = await prisma.auditoria.findFirst({
+    where: {
       id_usuario: recepcionista.id_usuario,
       entidad: 'Pago',
       id_registro: pagoAprobado.id_pago,
       accion: 'APROBAR',
-      valor_anterior: {
-        estado: 'PENDIENTE',
-      },
-      valor_nuevo: {
-        estado: 'APROBADO',
-      },
       detalle: 'Registro creado por el seed de pruebas.',
     },
   });
 
-  // =====================================================
+  if (auditoriaExistente) {
+    await prisma.auditoria.update({
+      where: { id_auditoria: auditoriaExistente.id_auditoria },
+      data: {
+        valor_anterior: { estado: 'PENDIENTE' },
+        valor_nuevo: { estado: 'APROBADO' },
+      },
+    });
+  } else {
+    await prisma.auditoria.create({
+      data: {
+        id_usuario: recepcionista.id_usuario,
+        entidad: 'Pago',
+        id_registro: pagoAprobado.id_pago,
+        accion: 'APROBAR',
+        valor_anterior: { estado: 'PENDIENTE' },
+        valor_nuevo: { estado: 'APROBADO' },
+        detalle: 'Registro creado por el seed de pruebas.',
+      },
+    });
+  }
+/*Evitamos duplicar auditorías
+La auditoría tampoco tiene una restricción única para identificar un evento del seed.
+
+Por eso buscamos una auditoría existente mediante:
+- Usuario.
+- Entidad.
+- ID del registro.
+- Acción.
+- Detalle.
+Si existe, la actualizamos. Si no existe, la creamos.
+*/
+
+// =====================================================
   // RESUMEN
   // =====================================================
 
@@ -663,21 +1240,21 @@ async function main() {
   console.log('USUARIOS PARA PRUEBAS:');
 
   console.log('ADMIN:', admin.email, '| contraseña: Admin123');
-
   console.log(
     'RECEPCIONISTA:',
     recepcionista.email,
     '| contraseña: Recepcionista123',
   );
-
-  console.log('PROFESOR:', profesorUsuario.email, '| contraseña: Profesor123');
-
+  console.log(
+    'PROFESOR:',
+    profesorUsuario.email,
+    '| contraseña: Profesor123',
+  );
   console.log(
     'ESTUDIANTE 1:',
     estudianteUsuario.email,
     '| contraseña: Estudiante123',
   );
-
   console.log(
     'ESTUDIANTE 2:',
     estudiante2Usuario.email,
@@ -690,58 +1267,49 @@ async function main() {
   console.log({
     estudiante1: estudiante.id_estudiante,
     estudiante2: estudiante2.id_estudiante,
-
     matriculaAnaActiva: matriculaAnaActiva.id_matricula,
-
     matriculaAnaPendiente: matriculaAnaPendiente.id_matricula,
-
     matriculaLuisFinalizada: matriculaLuisFinalizada.id_matricula,
-
     matriculaLuisPendiente: matriculaLuisPendiente.id_matricula,
-
     obligacionPagada: obligacionPagada.id_obligacion,
-
     obligacionPasarela: obligacionPasarela.id_obligacion,
-
     obligacionVencida: obligacionVencida.id_obligacion,
-
     obligacionCancelada: obligacionCancelada.id_obligacion,
-
     obligacionRechazada: obligacionRechazada.id_obligacion,
-
     obligacionLuis: obligacionLuis.id_obligacion,
-
     pagoAprobado: pagoAprobado.id_pago,
-
     pagoRechazado: pagoRechazado.id_pago,
-
     pagoPendiente: pagoPendiente.id_pago,
-
     actividad: actividadAbierta.id_actividad,
-
     entrega: entrega.id_entrega,
-
     grupoActivo: grupoActivo.id_grupo,
-
     grupoCerrado: grupoCerrado.id_grupo,
-
     grupoFinalizado: grupoFinalizado.id_grupo,
-
     periodoActivo: periodoActivo.id_periodo,
-
     periodoPlanificado: periodoPlanificado.id_periodo,
-
     periodoFinalizado: periodoFinalizado.id_periodo,
   });
+
+  // Variables utilizadas para mantener explícita la creación
+  // de todos los registros de prueba.
+  void admin;
+  void materiaInactiva;
+  void aulaNoDisponible;
+  void horario;
+  void actividadBorrador;
 }
 
 main()
   .catch((error) => {
     console.error('');
     console.error('ERROR EJECUTANDO EL SEED:', error);
-    process.exit(1);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();
     await pool.end();
   });
+//Mejoramos el cierre de conexiones
+//Al final utilizamos: finally para asegurarnos 
+//de que las conexiones se cierren incluso si ocurre un error durante la ejecución del seed.
+//Esto permite cerrar Prisma y el pool de PostgreSQL incluso cuando ocurre un error.
