@@ -13,6 +13,7 @@ import { EstadoUsuario, RolUsuario } from '../generated/prisma/enums.js';
 
 import { UpdateUsuarioEstadoDto } from './dto/update-usuario-estado.dto.js';
 import { ChangeOwnPasswordDto } from './dto/change-own-password.dto.js';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto.js';
 
 @Injectable()
 export class UsuariosService {
@@ -62,6 +63,68 @@ export class UsuariosService {
     }
 
     return usuario;
+  }
+
+  async findOwnProfile(idUsuario: number) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: {
+        id_usuario: idUsuario,
+      },
+      select: {
+        id_usuario: true,
+        primer_nombre: true,
+        segundo_nombre: true,
+        primer_apellido: true,
+        segundo_apellido: true,
+        email: true,
+        telefono: true,
+        rol: true,
+        estado: true,
+        fecha_creacion: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return usuario;
+  }
+
+  async updateOwnProfile(idUsuario: number, dto: UpdateOwnProfileDto) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: {
+        id_usuario: idUsuario,
+      },
+      select: {
+        id_usuario: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return this.prisma.usuario.update({
+      where: {
+        id_usuario: idUsuario,
+      },
+      data: {
+        ...dto,
+      },
+      select: {
+        id_usuario: true,
+        primer_nombre: true,
+        segundo_nombre: true,
+        primer_apellido: true,
+        segundo_apellido: true,
+        email: true,
+        telefono: true,
+        rol: true,
+        estado: true,
+        fecha_creacion: true,
+      },
+    });
   }
 
   async changeOwnPassword(idUsuario: number, dto: ChangeOwnPasswordDto) {

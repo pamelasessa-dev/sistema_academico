@@ -22,6 +22,7 @@ import { RolUsuario } from '../generated/prisma/enums.js';
 import { UsuariosService } from './usuarios.service.js';
 import { UpdateUsuarioEstadoDto } from './dto/update-usuario-estado.dto.js';
 import { ChangeOwnPasswordDto } from './dto/change-own-password.dto.js';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto.js';
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
@@ -47,6 +48,49 @@ export class UsuariosController {
   })
   findAll() {
     return this.usuariosService.findAll();
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Consultar mi perfil' })
+  @ApiResponse({
+    status: 200,
+    description: 'Perfil obtenido correctamente.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'JWT ausente, inválido o expirado.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Usuario no encontrado.',
+  })
+  findOwnProfile(@CurrentUser() user: AuthUser) {
+    return this.usuariosService.findOwnProfile(user.id_usuario);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Actualizar mi perfil' })
+  @ApiResponse({
+    status: 200,
+    description: 'Perfil actualizado correctamente.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Los datos enviados no son válidos.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'JWT ausente, inválido o expirado.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Usuario no encontrado.',
+  })
+  updateOwnProfile(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateOwnProfileDto,
+  ) {
+    return this.usuariosService.updateOwnProfile(user.id_usuario, dto);
   }
 
   @Get(':id')
